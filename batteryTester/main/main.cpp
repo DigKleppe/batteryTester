@@ -33,6 +33,7 @@ void setup()
    // Serial.println("could not connect. Fix and Reboot");
   }
   INA.setMaxCurrentShunt(0.82, 0.1,true);
+
 }
 
 
