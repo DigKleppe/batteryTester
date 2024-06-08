@@ -51,8 +51,8 @@ void currentRegulatorTask(void *pvParameter) {
 			gpio_set_level(CHARGERCPIN1, 1);
 
 		printf("bus voltage: %3.2f \t", vBus);
-		printf("current: %3.0f\t", current);
-		vTaskDelay(25);
+		printf("current: %3.0f\n", current);
+		vTaskDelay(5);
 
 	} while (1);
 

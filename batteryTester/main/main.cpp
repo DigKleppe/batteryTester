@@ -47,7 +47,7 @@ extern "C" void app_main(void)
 	setup();
 	printf("Hello from app_main!\n");
 
-	xTaskCreate(&currentRegulatorTask, "crTask", 1024 , NULL, 0, NULL);
+	xTaskCreate(&currentRegulatorTask, "crTask", 1024*2 , NULL, 0, NULL);
 
 	while (true) {
       //  printf("Hello from app_main!\n");
