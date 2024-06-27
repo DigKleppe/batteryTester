@@ -5,9 +5,11 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "hd44780.h"
 
 void currentRegulatorTask(void *pvParameter);
 static const char *TAG = "main";
+void initLCD();
 
 void setup()
 {
@@ -25,27 +27,21 @@ void setup()
 //  INA.setMaxCurrentShunt(0.82, 0.1,true);
 }
 
-//
-//void loop()
-//{
-//  //Serial.println("\nBUS\tSHUNT\tCURRENT\tPOWER");
-//  ESP_LOGE(TAG,"\nBUS\tSHUNT\tCURRENT\tPOWER");
-//  for (int i = 0; i < 20; i++)
-//  {
-//	  printf("bus voltage: %3.2f \t", INA.getBusVoltage());
-//	  printf("shunt voltage: %3.2f\t", INA.getShuntVoltage_mV());
-//	  printf("current: %3.0f\t", INA.getCurrent_mA());
-//	  printf("power: %3.0f\n\r", INA.getPower_mW());
-//    delay(1000);
-//  }
-//}
-
-//  -- END OF FILE --
 
 extern "C" void app_main(void)
 {
 	setup();
 	printf("Hello from app_main!\n");
+	vTaskDelay(100);
+
+
+//	initLCD();
+
+//	while(1) {
+//		 vTaskDelay(1000);
+//	//    lcd.write(0, 0, (unsigned char*)"Hello World!");
+//	    vTaskDelay(100);
+//	}
 
 	xTaskCreate(&currentRegulatorTask, "crTask", 1024*2 , NULL, 0, NULL);
 
