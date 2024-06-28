@@ -8,76 +8,93 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "Arduino.h"
+#include "INA226.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
-#include "Arduino.h"
+#include "hal/gpio_types.h"
+#include "tester.h"
 
 static const char *TAG = "cr";
 
+#define AVGS INA226_1024_SAMPLES
+#define RCURRENTSENSE 0.1 // on INA board
+
 #define CHARGEPIN1 GPIO_NUM_1
 #define DECHARGEPIN1 GPIO_NUM_2
+#define CHARGEPIN2 GPIO_NUM_1
+#define DECHARGEPIN2 GPIO_NUM_2
+#define CHARGEPIN3 GPIO_NUM_1
+#define DECHARGEPIN3 GPIO_NUM_2
+#define CHARGEPIN4 GPIO_NUM_1
+#define DECHARGEPIN4 GPIO_NUM_2
 
+const gpio_num_t chargePin[] = {CHARGEPIN1, CHARGEPIN2, CHARGEPIN3, CHARGEPIN4};
+const gpio_num_t deChargePin[] = {DECHARGEPIN1, DECHARGEPIN2, DECHARGEPIN3,
+                                  DECHARGEPIN4};
 
-#define CHARGERCPIN2 GPIO_NUM_16
-#define CHARGERCPIN3 GPIO_NUM_17
-#define CHARGERCPIN4 GPIO_NUM_18
+INA226 ina1(0x40); // A0 A1 gnd (default)
+INA226 ina2(0x41); // A0 VSS
+INA226 ina3(0x44); // A1 VSS
+INA226 ina4(0x45); // A0 A1 VSS
 
-#include "INA226.h"
+INA226 *ina[] = {&ina1, &ina2, &ina3, &ina4};
 
-INA226 ina(0x40);
-
-float wantedCurrent = 100; // mA
-float maxVoltage = 2.5;
+bool currentRegulatorStarted;
 
 void currentRegulatorTask(void *pvParameter) {
+  int cycles = 0;
+  Wire.begin();
 
-	float vBus;
-	float current;
-	
-	Wire.begin();
+  for (int n = 0; n < NR_CHANNELS; n++) {
+    testChannel[n].status = STATUS_NO_BAT;
 
-	if (!ina.begin()) {
-		ESP_LOGE(TAG, "could not connect. Fix and Reboot\n\n");
+    if (!(ina[n]->begin()))
+      testChannel[n].status = STATUS_INA_ERROR;
+    else {
+      if (ina[n]->setMaxCurrentShunt(0.81, RCURRENTSENSE, true) !=
+          INA226_ERR_NONE)
+        testChannel[n].status = STATUS_INA_ERROR;
+      else
+        ina[n]->setAverage(AVGS); // for volatage , current and power
+    }
+    gpio_set_level(chargePin[n], 0);
+    gpio_set_level(deChargePin[n], 0);
+    gpio_set_direction(chargePin[n], GPIO_MODE_OUTPUT);
+    gpio_set_direction(deChargePin[n], GPIO_MODE_OUTPUT);
+  }
 
-		while (1)
-			vTaskDelay(25);
+  for (int n = 0; n < NR_CHANNELS; n++) {
+    if (testChannel[n].status != STATUS_INA_ERROR) {
+      testChannel[n].voltage = ina[n]->getBusVoltage();
+      testChannel[n].averagedCurrent = ina[n]->getCurrent_mA();
+      testChannel[n].measuredPower = ina[n]->getPower();
+      testChannel[n].current = ina[n]->getShuntVoltage() / RCURRENTSENSE; // real time
 
-	}
-	ina.setMaxCurrentShunt(0.81, 0.1, true);
+      if (testChannel[n].setCurrent == 0) {
+        gpio_set_level(chargePin[n], 0);
+        gpio_set_level(deChargePin[n], 0);
+      } else {
+        if (testChannel[n].setCurrent > 0) { // charge
+          gpio_set_level(deChargePin[n], 0);
+          if (testChannel[n].current > testChannel[n].setCurrent)
+            gpio_set_level(chargePin[n], 0);
+          else
+            gpio_set_level(chargePin[n], 1);
+        } else {
+          gpio_set_level(chargePin[n], 0);
 
-	gpio_set_direction(CHARGEPIN1, GPIO_MODE_OUTPUT);
-	gpio_set_direction(DECHARGEPIN1, GPIO_MODE_OUTPUT);
-
-/*	gpio_set_level(DECHARGEPIN1, 0);
-	do {
-		vBus = ina.getBusVoltage();
-		current = ina.getCurrent_mA();
-		
-		if ( current > wantedCurrent)
-			gpio_set_level(CHARGEPIN1, 0);
-		else
-			gpio_set_level(CHARGEPIN1, 1);
-
-		printf("bus voltage: %3.2f \t", vBus);
-		printf("current: %3.0f\n", current);
-		vTaskDelay(5);
-	} while (1);
-*/
-	gpio_set_level(CHARGEPIN1, 0);
-	do {
-		vBus = ina.getBusVoltage();
-		current = -ina.getCurrent_mA();
-		
-		if ( current > wantedCurrent)
-			gpio_set_level(DECHARGEPIN1, 0);
-		else
-			gpio_set_level(DECHARGEPIN1, 1);
-
-		printf("bus voltage: %3.2f \t", vBus);
-		printf("current: %3.0f\n", current);
-		vTaskDelay(5);
-	} while (1);
-
-
-
+          if (testChannel[n].current <
+              testChannel[n].setCurrent) // negative current
+            gpio_set_level(deChargePin[n], 0);
+          else
+            gpio_set_level(deChargePin[n], 1);
+        }
+      }
+    }
+  }
+  vTaskDelay(5);
+  if ( cycles > 10 ) // avererage
+  	currentRegulatorStarted = true;
 }
+
