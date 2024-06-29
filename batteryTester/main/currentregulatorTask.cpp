@@ -17,7 +17,7 @@
 
 static const char *TAG = "cr";
 
-#define AVGS INA226_1024_SAMPLES
+#define AVGS  INA226_1_SAMPLE  // INA226_4_SAMPLES //INA226_16_SAMPLES //   INA226_1024_SAMPLES
 #define RCURRENTSENSE 0.1 // on INA board
 
 #define CHARGEPIN1 GPIO_NUM_1
@@ -63,38 +63,39 @@ void currentRegulatorTask(void *pvParameter) {
     gpio_set_direction(chargePin[n], GPIO_MODE_OUTPUT);
     gpio_set_direction(deChargePin[n], GPIO_MODE_OUTPUT);
   }
+  while (1) {
+    for (int n = 0; n < NR_CHANNELS; n++) {
+      if (testChannel[n].status != STATUS_INA_ERROR) {
+        testChannel[n].voltage = ina[n]->getBusVoltage();
+        testChannel[n].averagedCurrent = ina[n]->getCurrent_mA();
+        testChannel[n].measuredPower = ina[n]->getPower();
+        testChannel[n].current =
+            (ina[n]->getShuntVoltage() * 1000.0) / RCURRENTSENSE; // real time
 
-  for (int n = 0; n < NR_CHANNELS; n++) {
-    if (testChannel[n].status != STATUS_INA_ERROR) {
-      testChannel[n].voltage = ina[n]->getBusVoltage();
-      testChannel[n].averagedCurrent = ina[n]->getCurrent_mA();
-      testChannel[n].measuredPower = ina[n]->getPower();
-      testChannel[n].current = ina[n]->getShuntVoltage() / RCURRENTSENSE; // real time
-
-      if (testChannel[n].setCurrent == 0) {
-        gpio_set_level(chargePin[n], 0);
-        gpio_set_level(deChargePin[n], 0);
-      } else {
-        if (testChannel[n].setCurrent > 0) { // charge
-          gpio_set_level(deChargePin[n], 0);
-          if (testChannel[n].current > testChannel[n].setCurrent)
-            gpio_set_level(chargePin[n], 0);
-          else
-            gpio_set_level(chargePin[n], 1);
-        } else {
+        if (testChannel[n].setCurrent == 0) {
           gpio_set_level(chargePin[n], 0);
-
-          if (testChannel[n].current <
-              testChannel[n].setCurrent) // negative current
+          gpio_set_level(deChargePin[n], 0);
+        } else {
+          if (testChannel[n].setCurrent > 0) { // charge
             gpio_set_level(deChargePin[n], 0);
-          else
-            gpio_set_level(deChargePin[n], 1);
+            if (testChannel[n].current > testChannel[n].setCurrent)
+              gpio_set_level(chargePin[n], 0);
+            else
+              gpio_set_level(chargePin[n], 1);
+          } else {
+            gpio_set_level(chargePin[n], 0);
+
+            if (testChannel[n].current <
+                testChannel[n].setCurrent) // negative current
+              gpio_set_level(deChargePin[n], 0);
+            else
+              gpio_set_level(deChargePin[n], 1);
+          }
         }
       }
     }
+    vTaskDelay(5);
+    if (cycles++ > 10) // avererage
+      currentRegulatorStarted = true;
   }
-  vTaskDelay(5);
-  if ( cycles > 10 ) // avererage
-  	currentRegulatorStarted = true;
 }
-

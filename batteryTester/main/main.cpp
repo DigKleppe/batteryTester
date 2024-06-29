@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "hd44780.h"
+#include "tester.h"
 
 void currentRegulatorTask(void *pvParameter);
 static const char *TAG = "main";
@@ -43,8 +44,8 @@ extern "C" void app_main(void)
 //	    vTaskDelay(100);
 //	}
 
-	xTaskCreate(&currentRegulatorTask, "crTask", 1024*2 , NULL, 0, NULL);
-
+	xTaskCreate(&currentRegulatorTask, "crTask", 1024*2 , NULL, configMAX_PRIORITIES, NULL);
+	xTaskCreate(&testTask, "testTask", 1024*4 , NULL, 0, NULL);
 	while (true) {
       //  printf("Hello from app_main!\n");
 		vTaskDelay(25);
