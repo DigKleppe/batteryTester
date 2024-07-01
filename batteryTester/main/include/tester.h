@@ -29,21 +29,26 @@ typedef struct {
   int current;
   int averagedCurrent;  // mA
   int measuredCapacity; // mAH
+  int samples;
   int measuredPower;     // mW actual 
   int inPower;	// mW charged pPower
   int outPower;	// mW decharged Power
   float voltage;
+  float maxVoltage;
+  float currentCalibration;
 } testChannel_t;
 
 extern testChannel_t testChannel[NR_CHANNELS];
 
-#define CHARGEDVOLATGE 3.0 // 1.9
-#define DECHARDEDVOLATAGE 1.4
+#define MAXCHARGEDVOLATGE  1.9
+#define DECHARDEDVOLATAGE 0.9
 #define NOBATVOLTAGE 4.0
 #define NOCURRENT	10 // mA
+#define CHARGEDDROP	0.015 // V full charged 
 
 void testTask (void *pvParameter);
 void currentRegulatorTask (void *pvParameter);
+
 
 
 #endif /* MAIN_INCLUDE_TESTER_H_ */

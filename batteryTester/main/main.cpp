@@ -12,26 +12,10 @@ void currentRegulatorTask(void *pvParameter);
 static const char *TAG = "main";
 void initLCD();
 
-void setup()
-{
-//  Serial0.begin(115200);
-//  Serial0.println(__FILE__);
-//  Serial0.print("INA226_LIB_VERSION: ");
-//  Serial0.println(INA226_LIB_VERSION);
-//
-//  Wire.begin();
-//  if (!INA.begin() )
-//  {
-//	ESP_LOGE(TAG, "could not connect. Fix and Reboot\n\n");
-//   // Serial.println("could not connect. Fix and Reboot");
-//  }
-//  INA.setMaxCurrentShunt(0.82, 0.1,true);
-}
 
 
 extern "C" void app_main(void)
 {
-	setup();
 	printf("Hello from app_main!\n");
 	vTaskDelay(100);
 

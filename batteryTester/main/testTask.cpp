@@ -19,8 +19,25 @@ static const char *TAG = "testTask";
 testChannel_t testChannel[NR_CHANNELS];
 extern bool currentRegulatorStarted;
 
+bool isFull(int idx) {
+  float diff;
+  if (testChannel[idx].voltage > MAXCHARGEDVOLATGE) {
+    ESP_LOGE(TAG, "full voltage max voltage exeeded ");
+    return true;
+  }
+  diff = testChannel[idx].maxVoltage - testChannel[idx].voltage;
+  if (diff > CHARGEDDROP) {
+    ESP_LOGE(TAG, "full voltage dropped %f ", diff);
+    return true;
+  }
+  if (testChannel[idx].maxVoltage < testChannel[idx].voltage)
+    testChannel[idx].maxVoltage = testChannel[idx].voltage;
+  return false;
+}
+
 void testTask(void *pvParameter) {
   TickType_t xLastWakeTime;
+  int insertTimer = 2;
 
   while (!currentRegulatorStarted)
     vTaskDelay(100);
@@ -44,20 +61,24 @@ void testTask(void *pvParameter) {
         break;
 
       case STATUS_NO_BAT:
-        ESP_LOGI(TAG, "%d no battery %f V", n+1, testChannel[n].voltage);
+        ESP_LOGI(TAG, "%d no battery %4.3f V", n + 1, testChannel[n].voltage);
         if (testChannel[n].voltage < NOBATVOLTAGE) {
-          ESP_LOGI(TAG, "%d+1 No bat", n);
-          ESP_LOGI(TAG, "battery %d+1 inserted", n);
-          testChannel[n].measuredCapacity = 0;
-          testChannel[n].measuredPower = 0;
-          testChannel[n].setCurrent = testChannel[n].chargeCurrent;
-          testChannel[n].status = STATUS_CHARGING;
+          if (insertTimer-- == 0) {
+            ESP_LOGI(TAG, "battery %d inserted", n + 1);
+            testChannel[n].measuredCapacity = 0;
+            testChannel[n].measuredPower = 0;
+            testChannel[n].setCurrent = testChannel[n].chargeCurrent;
+            testChannel[n].maxVoltage = 0;
+            testChannel[n].status = STATUS_CHARGING;
+          }
+        } else {
+          insertTimer = 3;
         }
         break;
       case STATUS_CHARGING:
-        ESP_LOGI(TAG, "%d charging %d mA %f V", n+1,
+        ESP_LOGI(TAG, "%d charging %d mA %4.3f V", n + 1,
                  testChannel[n].averagedCurrent, testChannel[n].voltage);
-        if (testChannel[n].voltage > CHARGEDVOLATGE) {
+        if (isFull(n)) {
           testChannel[n].inPower = testChannel[n].measuredPower;
           testChannel[n].setCurrent = 0;
           testChannel[n].status = STATUS_WAIT1;
@@ -65,10 +86,11 @@ void testTask(void *pvParameter) {
         break;
 
       case STATUS_WAIT1:
-        ESP_LOGI(TAG, "%d wait1 %d mA %f V", n+1, testChannel[n].current,
+        ESP_LOGI(TAG, "%d wait1 %d mA %4.3f V", n + 1, testChannel[n].current,
                  testChannel[n].voltage);
         if (testChannel[n].current < NOCURRENT) {
           testChannel[n].measuredCapacity = 0;
+          testChannel[n].samples = 0;
           testChannel[n].measuredPower = 0;
           testChannel[n].setCurrent = -testChannel[n].deChargeCurrent;
           testChannel[n].status = STATUS_DECHARGING;
@@ -76,39 +98,48 @@ void testTask(void *pvParameter) {
         break;
 
       case STATUS_DECHARGING:
-        ESP_LOGI(TAG, "%d+1 decharging %d mA %f V", n,
+        ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1,
                  testChannel[n].averagedCurrent, testChannel[n].voltage);
 
-        if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
-          testChannel[n].outPower = testChannel[n].measuredPower;
-          testChannel[n].measuredCapacity = 0;
-          testChannel[n].measuredPower = 0;
+        testChannel[n].measuredCapacity += testChannel[n].averagedCurrent;
+        testChannel[n].samples++;
 
+        if ((testChannel[n].voltage < DECHARDEDVOLATAGE) ||
+            (testChannel[n].voltage >
+             NOBATVOLTAGE)) // removed
+                            // testChannel[n].outPower =
+                            // testChannel[n].measuredPower;
+        {
+          //          testChannel[n].measuredPower = 0;
+          testChannel[n].measuredCapacity =
+              testChannel[n].measuredCapacity / 3600; // to mAh
           testChannel[n].setCurrent = 0;
           testChannel[n].status = STATUS_TESTED;
         }
         break;
 
       case STATUS_WAIT2:
-        ESP_LOGI(TAG, "%d wait2 %d mA %f V", n+1, testChannel[n].current,
+        ESP_LOGI(TAG, "%d wait2 %d mA %4.3f V", n + 1, testChannel[n].current,
                  testChannel[n].voltage);
         if (testChannel[n].current < NOCURRENT) {
           testChannel[n].setCurrent = testChannel[n].chargeCurrent;
           testChannel[n].status = STATUS_TESTED;
+          testChannel[n].maxVoltage = 0;
         }
         break;
 
       case STATUS_TESTED: // recharge after testing
-        ESP_LOGI(TAG, "%d tested charging %d mA %f V", n+1,
-                 testChannel[n].averagedCurrent, testChannel[n].voltage);
-        if (testChannel[n].voltage > CHARGEDVOLATGE) {
+        ESP_LOGI(TAG, "%d tested charging %d mA %4.3f V %d mAH", n + 1,
+                 testChannel[n].averagedCurrent, testChannel[n].voltage,
+                 testChannel[n].measuredCapacity);
+        if (isFull(n)) {
           testChannel[n].status = STATUS_CHARGED;
-          testChannel[n].setCurrent = 0;
+          testChannel[n].setCurrent = 10; // trickle
         }
         break;
 
       case STATUS_CHARGED:
-        ESP_LOGI(TAG, "%d ready  %d mA %f V", n+1,
+        ESP_LOGI(TAG, "%d ready  %d mA %4.3f V", n + 1,
                  testChannel[n].averagedCurrent, testChannel[n].voltage);
         if (testChannel[n].voltage > NOBATVOLTAGE) {
           testChannel[n].status = STATUS_NO_BAT;
