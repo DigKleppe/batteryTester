@@ -40,10 +40,10 @@ typedef struct {
 
 extern testChannel_t testChannel[NR_CHANNELS];
 
-#define MAXCHARGEDVOLATGE  1.9
-#define DECHARDEDVOLATAGE 0.9
+#define MAXCHARGEDVOLATGE 1.3 //  1.9
+#define DECHARDEDVOLATAGE 1.1 //   0.9
 #define NOBATVOLTAGE 4.0
-#define NOCURRENT	10 // mA
+#define NOCURRENT	2 // mA
 #define CHARGEDDROP	0.015 // V full charged 
 
 void testTask (void *pvParameter);

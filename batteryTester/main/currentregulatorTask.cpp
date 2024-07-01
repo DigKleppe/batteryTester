@@ -22,7 +22,7 @@ static const char *TAG = "cr";
   INA226_1_SAMPLE // INA226_4_SAMPLES //INA226_16_SAMPLES // INA226_1024_SAMPLES
 #define RCURRENTSENSE 0.1 // on INA board
 
-#define AVGS 16// current and voltage
+#define AVGS 16 // current and voltage
 
 #define CHARGEPIN1 GPIO_NUM_1
 #define DECHARGEPIN1 GPIO_NUM_2
@@ -79,7 +79,8 @@ void currentRegulatorTask(void *pvParameter) {
     if (!(ina[n]->begin()))
       testChannel[n].status = STATUS_INA_ERROR;
     else {
-      if (ina[n]->setMaxCurrentShunt(0.81, RCURRENTSENSE, true) != INA226_ERR_NONE)
+      if (ina[n]->setMaxCurrentShunt(0.81, RCURRENTSENSE, true) !=
+          INA226_ERR_NONE)
         testChannel[n].status = STATUS_INA_ERROR;
       else
         ina[n]->setAverage(INA_AVGS); // for volatage , current and power
