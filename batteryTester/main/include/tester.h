@@ -8,10 +8,16 @@
 #ifndef MAIN_INCLUDE_TESTER_H_
 #define MAIN_INCLUDE_TESTER_H_
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "lcd.h"
+
 #define NR_CHANNELS 4
 
 typedef enum {
   STATUS_NO_BAT,
+  STATUS_SETUP,
   STATUS_CHARGING,
   STATUS_WAIT1,
   STATUS_DECHARGING,
@@ -39,10 +45,13 @@ typedef struct {
 } testChannel_t;
 
 extern testChannel_t testChannel[NR_CHANNELS];
+extern bool setupNeeded;
+extern SemaphoreHandle_t LCDsemphr;
 
-#define MAXCHARGEDVOLATGE 1.3 //  1.9
-#define DECHARDEDVOLATAGE 1.1 //   0.9
-#define NOBATVOLTAGE 4.0
+#define MAXCHARGEDVOLATGE 1.9 
+#define DECHARDEDVOLATAGE 0.9 
+#define NOBATVOLTAGE 	4.0
+#define ERRORVOLTAGE	0.6
 #define NOCURRENT	2 // mA
 #define CHARGEDDROP	0.015 // V full charged 
 

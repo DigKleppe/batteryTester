@@ -20,6 +20,7 @@ static const char *TAG = "testTask";
 
 testChannel_t testChannel[NR_CHANNELS];
 extern bool currentRegulatorStarted;
+bool setupNeeded; // new battery inserted
 
 bool isFull(int idx) {
   float diff;
@@ -40,7 +41,7 @@ bool isFull(int idx) {
 
 void testTask(void *pvParameter) {
   TickType_t xLastWakeTime;
-  int insertTimer = 2;
+  //  int insertTimer = 2;
   char LCDline[400];
   int len;
   int cntr = 0;
@@ -61,33 +62,38 @@ void testTask(void *pvParameter) {
   while (1) {
     memset(LCDline, 0, LCD_COLS + 1); // clr buffer
     for (int n = 0; n < NR_CHANNELS; n++) {
-      len = sprintf(LCDline, "%d", n + 1);
+      len = sprintf(LCDline, "%d ", n + 1);
       switch (testChannel[n].status) {
       case STATUS_INA_ERROR:
-        strcpy(LCDline + len, " INA fout");
+        strcpy(LCDline + len, "* INA fout *");
         break;
 
       case STATUS_NO_BAT:
         ESP_LOGI(TAG, "%d no battery %4.3f V", n + 1, testChannel[n].voltage);
-        if (testChannel[n].voltage < NOBATVOLTAGE) {
-          strcpy(LCDline + len, "");
-          if (insertTimer-- == 0) {
-            ESP_LOGI(TAG, "battery %d inserted", n + 1);
+        if (testChannel[n].voltage < ERRORVOLTAGE)
+          sprintf(LCDline + len, "* Fout * %3.2f V", testChannel[n].voltage);
+        else {
+          if (testChannel[n].voltage < NOBATVOLTAGE) {
+            strcpy(LCDline + len, "");
+            setupNeeded = true;
             testChannel[n].measuredCapacity = 0;
             testChannel[n].measuredPower = 0;
-            testChannel[n].setCurrent = testChannel[n].chargeCurrent;
             testChannel[n].maxVoltage = 0;
-            testChannel[n].status = STATUS_CHARGING;
+            testChannel[n].setCurrent = 0;
+            testChannel[n].status = STATUS_SETUP;
+          } else {
+            strcpy(LCDline + len, "Geen batterij");
           }
-        } else {
-          insertTimer = 2;
-          strcpy(LCDline + len, " Geen batterij");
         }
         break;
+        
+      case STATUS_SETUP: // handled in main
+        break;
+
       case STATUS_CHARGING:
-        ESP_LOGI(TAG, "%d charging %d mA %4.3f V", n + 1,
+        ESP_LOGI(TAG, "%d charging %3d mA %4.3f V", n + 1,
                  testChannel[n].averagedCurrent, testChannel[n].voltage);
-        sprintf(LCDline + len, "L %dmA %4.3fV", testChannel[n].averagedCurrent,
+        sprintf(LCDline + len, "L %3dmA %4.3fV", testChannel[n].averagedCurrent,
                 testChannel[n].voltage);
         if (isFull(n)) {
           testChannel[n].inPower = testChannel[n].measuredPower;
@@ -98,7 +104,7 @@ void testTask(void *pvParameter) {
         break;
 
       case STATUS_WAIT1:
-        sprintf(LCDline + len, "O %dmA %4.3fV", testChannel[n].averagedCurrent,
+        sprintf(LCDline + len, "O %3dmA %4.3fV", testChannel[n].averagedCurrent,
                 testChannel[n].voltage);
         ESP_LOGI(TAG, "%d wait1 %d mA %4.3f V", n + 1, testChannel[n].current,
                  testChannel[n].voltage);
@@ -115,10 +121,10 @@ void testTask(void *pvParameter) {
       case STATUS_DECHARGING:
         ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1,
                  -testChannel[n].averagedCurrent, testChannel[n].voltage);
-        sprintf(LCDline + len, "O %dmA %4.3fV", -testChannel[n].averagedCurrent,
+        sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent,
                 testChannel[n].voltage);
 
-        testChannel[n].measuredCapacity += testChannel[n].averagedCurrent;
+        testChannel[n].measuredCapacity -= testChannel[n].averagedCurrent;
         testChannel[n].samples++;
 
         if ((testChannel[n].voltage < DECHARDEDVOLATAGE) ||
@@ -136,7 +142,7 @@ void testTask(void *pvParameter) {
         break;
 
       case STATUS_WAIT2:
-        sprintf(LCDline + len, "O %dmA %4.3fV", -testChannel[n].averagedCurrent,
+        sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent,
                 testChannel[n].voltage);
         ESP_LOGI(TAG, "%d wait2 %d mA %4.3f V", n + 1, testChannel[n].current,
                  testChannel[n].voltage);
@@ -152,7 +158,7 @@ void testTask(void *pvParameter) {
                  testChannel[n].averagedCurrent, testChannel[n].voltage,
                  testChannel[n].measuredCapacity);
 
-        sprintf(LCDline + len, "T*%dmAh* %4.3fV",
+        sprintf(LCDline + len, "T*%4dmAh* %4.3fV",
                 testChannel[n].measuredCapacity, testChannel[n].voltage);
 
         if (isFull(n)) {
@@ -165,7 +171,7 @@ void testTask(void *pvParameter) {
         ESP_LOGI(TAG, "%d ready  %d mA %4.3f V", n + 1,
                  testChannel[n].averagedCurrent, testChannel[n].voltage);
 
-        sprintf(LCDline + len, "T *%dmAh* Vol",
+        sprintf(LCDline + len, "T *%4dmAh* Vol",
                 testChannel[n].measuredCapacity);
 
         if (testChannel[n].voltage > NOBATVOLTAGE) {
@@ -173,13 +179,17 @@ void testTask(void *pvParameter) {
         }
         break;
       }
-      LCDline[LCD_COLS] = 0; // limit to actual value
-      lcd.setCursor(0, n);
 
-      for (int x = strlen(LCDline); x < LCD_COLS; x++)
-        LCDline[x] = ' '; // fill with spaces
+      if (xSemaphoreTakeRecursive(LCDsemphr, (TickType_t)0) == pdTRUE) {
+        LCDline[LCD_COLS] = 0; // limit to actual value
+        lcd.setCursor(0, n);
 
-      lcd.print(LCDline);
+        for (int x = strlen(LCDline); x < LCD_COLS; x++)
+          LCDline[x] = ' '; // fill with spaces
+
+        lcd.print(LCDline);
+        xSemaphoreGiveRecursive(LCDsemphr);
+      }
 
       xTaskDelayUntil(&xLastWakeTime, 250);
     }
