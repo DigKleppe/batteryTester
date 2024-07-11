@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="js/chart.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/common.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript">
+	google.charts.load('current', {
+		'packages' : [ 'corechart' ]
+	});
+	google.charts.setOnLoadCallback(initChart);
+	google.load("visualization", "1", {packages:["corechart"]});
+	
+</script>
+  </head>
+  <body>
+
+    <table width="428" height="30">
+      <tbody>
+        <tr>
+          <th>1</th>
+          <th>2</th>
+          <th>3</th>
+          <th>4</th>
+        </tr>
+        <tr>
+          <td>
+            <div id="1"></div>
+          </td>
+          <td>
+            <div id="2"></div>
+          </td>
+          <td>
+            <div id="3"></div>
+          </td>
+          <td>
+            <div id="4"></div>
+          </td>
+         </tr>
+      </tbody>
+    </table>
+    <div id="chart" style="width: 900px; height: 500px"></div>
+    
+    <input type="checkbox" id="T1cb" class="save-cb-state" name="T1cb" value="yes">
+	<label for="T1cb">1</label><br>
+	<input type="checkbox" id="T2cb" class="save-cb-state" name="T2cb" value="yes">
+	<label for="T2cb">2</label><br>
+	<input type="checkbox" id="T3cb" class="save-cb-state"  name="T3cb" value="yes">
+	<label for="T3cb">3</label><br>
+	<input type="checkbox" id="T4cb" class="save-cb-state"  name="T4cb" value="yes">
+	<label for="T4cb">4</label><br>
+   <a href="settings.html">Instellingen</a>
+  </body>
+      
+</html>

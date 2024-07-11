@@ -5,8 +5,7 @@
  *      Author: dig
  */
 
-
-#include "lcd.h" 
+#include "lcd.h"
 
 const int rs = 15, rw = 16, en = 17, db4 = 4, db5 = 5, db6 = 6,
           db7 = 7; // for all other devices
@@ -18,8 +17,6 @@ static const int dummyvar = 0; // dummy declaration for older broken IDEs!!!!
 #ifndef HD44780_LCDOBJECT
 
 #endif
-
-
 
 #ifndef LCD_COLS
 #define LCD_COLS 20
@@ -54,45 +51,29 @@ bool initLCD() {
   int charBitmapSize = (sizeof(charBitmap) / sizeof(charBitmap[0]));
 
   if (!lcd.begin(LCD_COLS, LCD_ROWS)) {
-	return false;
-  //  lcd.setCursor(0, 0);
-  //  lcd.print("Hello, World!");
-  } 
+    return false;
+  }
 
   // create the custom bargraph characters
   for (int i = 0; i < charBitmapSize; i++) {
     lcd.createChar(i, (uint8_t *)charBitmap[i]);
   }
   lcd.setExecTimes(3000, 50);
-  	
+
   return true;
 
-/*  while (1) {
-    lcd.setCursor(0, 1);
-    sprintf (str,"Hello %d",cntr++);
-    lcd.print(str);
-    lcd.setCursor(0, 2);
-    lcd.print("Hello line 3");
-    lcd.setCursor(0, 3);
-    lcd.print("Hello line 4");
-    delay(100);
-  }*/
+  /*  while (1) {
+   lcd.setCursor(0, 1);
+   sprintf (str,"Hello %d",cntr++);
+   lcd.print(str);
+   lcd.setCursor(0, 2);
+   lcd.print("Hello line 3");
+   lcd.setCursor(0, 3);
+   lcd.print("Hello line 4");
+   delay(100);
+   }*/
 
   // lcd.clear();
 }
 
-void loop() {}
 
-// fatalError() - loop & blink and error code
-void fatalError(int ecode) {
-#if defined(hd44780_h)
-  // if using hd44780 library use built in fatalError()
-  hd44780::fatalError(ecode);
-#else
-  if (ecode) {
-  } // dummy if statement to remove warning about not using ecode
-  while (1) {
-    delay(1); // delay to prevent WDT on some cores
-  }
-#endif
-}

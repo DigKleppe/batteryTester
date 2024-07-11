@@ -7,20 +7,23 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-
 #include "INA226.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "lcd.h"
-#include "tester.h"
+#include "log.h"
+#include "measureTask.h"
 #include <Arduino.h>
+#include "hd44780.h"
+#include "hd44780ioClass/hd44780_NTCU20025ECPB_pinIO.h" 
+#include "settings.h"
 #include <stdio.h>
 
+extern int scriptState;
 static const char *TAG = "testTask";
 
 testChannel_t testChannel[NR_CHANNELS];
 extern bool currentRegulatorStarted;
-bool setupNeeded; // new battery inserted
 
 bool isFull(int idx) {
   float diff;
@@ -44,7 +47,7 @@ void testTask(void *pvParameter) {
   //  int insertTimer = 2;
   char LCDline[400];
   int len;
-  int cntr = 0;
+  bool toggle;
 
   while (!currentRegulatorStarted)
     vTaskDelay(100);
@@ -75,7 +78,6 @@ void testTask(void *pvParameter) {
         else {
           if (testChannel[n].voltage < NOBATVOLTAGE) {
             strcpy(LCDline + len, "");
-            setupNeeded = true;
             testChannel[n].measuredCapacity = 0;
             testChannel[n].measuredPower = 0;
             testChannel[n].maxVoltage = 0;
@@ -86,7 +88,7 @@ void testTask(void *pvParameter) {
           }
         }
         break;
-        
+
       case STATUS_SETUP: // handled in main
         break;
 
@@ -99,7 +101,6 @@ void testTask(void *pvParameter) {
           testChannel[n].inPower = testChannel[n].measuredPower;
           testChannel[n].setCurrent = 0;
           testChannel[n].status = STATUS_WAIT1;
-          cntr = 2;
         }
         break;
 
@@ -121,8 +122,8 @@ void testTask(void *pvParameter) {
       case STATUS_DECHARGING:
         ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1,
                  -testChannel[n].averagedCurrent, testChannel[n].voltage);
-        sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent,
-                testChannel[n].voltage);
+        sprintf(LCDline + len, "O %3dmA %4.3fV",
+                -testChannel[n].averagedCurrent, testChannel[n].voltage);
 
         testChannel[n].measuredCapacity -= testChannel[n].averagedCurrent;
         testChannel[n].samples++;
@@ -142,8 +143,8 @@ void testTask(void *pvParameter) {
         break;
 
       case STATUS_WAIT2:
-        sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent,
-                testChannel[n].voltage);
+        sprintf(LCDline + len, "O %3dmA %4.3fV",
+                -testChannel[n].averagedCurrent, testChannel[n].voltage);
         ESP_LOGI(TAG, "%d wait2 %d mA %4.3f V", n + 1, testChannel[n].current,
                  testChannel[n].voltage);
         if (testChannel[n].current < NOCURRENT) {
@@ -168,7 +169,7 @@ void testTask(void *pvParameter) {
         break;
 
       case STATUS_CHARGED:
-        ESP_LOGI(TAG, "%d ready  %d mA %4.3f V", n + 1,
+        ESP_LOGI(TAG, "%d ready %4d mA %4.3f V", n + 1,
                  testChannel[n].averagedCurrent, testChannel[n].voltage);
 
         sprintf(LCDline + len, "T *%4dmAh* Vol",
@@ -177,6 +178,16 @@ void testTask(void *pvParameter) {
         if (testChannel[n].voltage > NOBATVOLTAGE) {
           testChannel[n].status = STATUS_NO_BAT;
         }
+        break;
+
+      case STATUS_TESTMODE:
+        sprintf(LCDline + len, "test %4dmA %4.3fV",
+                testChannel[n].averagedCurrent, testChannel[n].voltage);
+        toggle = !toggle;
+        if (toggle)
+          testChannel[n].setCurrent = 100;
+        else
+          testChannel[n].setCurrent = 0;
         break;
       }
 
@@ -190,10 +201,156 @@ void testTask(void *pvParameter) {
         lcd.print(LCDline);
         xSemaphoreGiveRecursive(LCDsemphr);
       }
-
-      xTaskDelayUntil(&xLastWakeTime, 250);
     }
-
-    // xTaskDelayUntil(&xLastWakeTime, 1000);
+    xTaskDelayUntil(&xLastWakeTime, 1000);
   }
 }
+
+
+
+// called from CGI
+
+
+int getSensorNameScript(char *pBuffer, int count) {
+	int len = 0;
+	switch (scriptState) {
+	case 0:
+		scriptState++;
+		len += sprintf(pBuffer + len, "Actueel,Nieuw\n");
+		len += sprintf(pBuffer + len, "%s\n", userSettings.moduleName);
+		return len;
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+int getInfoValuesScript(char *pBuffer, int count) {
+	int len = 0;
+	char str[10];
+	switch (scriptState) {
+	case 0:
+		scriptState++;
+		len += sprintf(pBuffer + len, "%s\n", "Meting,Actueel,Offset,Gain");
+		for ( int n =0; n < NR_CHANNELS;n++) {
+			sprintf (str, "Positie %d", n+1);
+			len += sprintf(pBuffer + len, "%s,%3.2f, 0, 1.0\n", str, testChannel[n].voltage ); // no gain and offset needed for voltage
+			len += sprintf(pBuffer + len, "%s,%3.2f,%3.2f,%3.2f\n", str, testChannel[n].current-userSettings.currentOffset[n], userSettings.currentOffset[n], userSettings.currentGain[n]); 
+		}
+		return len;
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+// only build javascript table
+
+int getCalValuesScript(char *pBuffer, int count) {
+	int len = 0;
+	switch (scriptState) {
+	case 0:
+		scriptState++;
+		len += sprintf(pBuffer + len, "%s\n", "Meting,Referentie,Stel in,Herstel");
+		len += sprintf(pBuffer + len, "%s\n", "Positie 1\n Positie 2\n Positie 3\n Positie 4\n");
+		return len;
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+int saveSettingsScript(char *pBuffer, int count) {
+	saveSettings();
+	return 0;
+}
+
+int cancelSettingsScript(char *pBuffer, int count) {
+	loadSettings();
+	return 0;
+}
+
+calValues_t calValues;
+// @formatter:off
+char tempName[MAX_STRLEN];
+
+const CGIdesc_t writeVarDescriptors[] = {
+    { "Stroom", &calValues.current, FLT, NR_CHANNELS },
+    { "moduleName",tempName, STR, 1 }
+};
+
+#define NR_CALDESCRIPTORS (sizeof (writeVarDescriptors)/ sizeof (CGIdesc_t))
+// @formatter:on
+
+int getRTMeasValuesScript(char *pBuffer, int count) {
+int len = 0;
+
+switch (scriptState) {
+case 0:
+	scriptState++;
+
+	len = sprintf(pBuffer + len, "%d,", (int) timeStamp++);
+	for (int n = 0; n < NR_CHANNELS; n++) {
+		len += sprintf(pBuffer + len, "%3.2f,", testChannel[n].voltage);  
+	}
+	return len;
+	break;
+default:
+	break;
+}
+return 0;
+}
+
+// these functions only work for one user!
+
+int getNewMeasValuesScript(char *pBuffer, int count) {
+
+int left, len = 0;
+if (dayLogRxIdx != (dayLogTxIdx)) {  // something to send?
+	do {
+		len += sprintf(pBuffer + len, "%d,", (int)dayLog[dayLogRxIdx].timeStamp);
+		for (int n = 0; n < NR_CHANNELS; n++) {
+			len += sprintf(pBuffer + len, "%3.2f,", dayLog[dayLogRxIdx].voltage[n]);
+		}
+		len += sprintf(pBuffer + len, "\n");
+		dayLogRxIdx++;
+		if (dayLogRxIdx > MAXDAYLOGVALUES)
+			dayLogRxIdx = 0;
+		left = count - len;
+
+		} while ((dayLogRxIdx != dayLogTxIdx) && (left > 40));
+
+	}
+	return len;
+}
+
+void parseCGIWriteData(char *buf, int received) {
+/*	if (strncmp(buf, "setCal:", 7) == 0) {  //
+
+		float ref = (refSensorAverager.average() / 1000.0);
+		for ( int n = 0; n < NR_CHANNELS; n++){
+			if (lastTemperature[n] != ERRORTEMP ){
+				float t =  ntcAverager[n].average() / 1000.0;
+				userSettings.temperatureOffset[n] = t - ref;
+			}
+		}
+	} else {
+		if (strncmp(buf, "setName:", 8) == 0) {
+			if (readActionScript(&buf[8], writeVarDescriptors, NR_CALDESCRIPTORS)) {
+				if (strcmp(tempName, userSettings.moduleName) != 0) {
+					strcpy(userSettings.moduleName, tempName);
+					ESP_ERROR_CHECK(mdns_hostname_set(userSettings.moduleName));
+					ESP_LOGI(TAG, "Hostname set to %s", userSettings.moduleName);
+					saveSettings();
+				}
+			}
+		}
+	}*/
+}
+
+
+
+
