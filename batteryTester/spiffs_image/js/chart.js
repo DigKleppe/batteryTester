@@ -129,7 +129,7 @@ function initChart() {
 
 function initTimer() {
 	var activeSeries = 1;
-	chart = new google.visualization.LineChart(document.getElementById('temperaturesChart'));
+	chart = new google.visualization.LineChart(document.getElementById('chart'));
 	data = new google.visualization.DataTable();
 	data.addColumn('string', 'Time');
 	
