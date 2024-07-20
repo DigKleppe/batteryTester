@@ -11,6 +11,10 @@ var INFOTABLENAME = "infoTable";
 var CALTABLENAME = "calTable";
 var NAMETABLENAME = "nameTable";
 
+var calRun = false;
+var charge = true;
+var testCurrent;
+
 function makeNameTable(descriptorData) {
 	var colls;
 	nameTbl = document.getElementById(NAMETABLENAME);// ocument.createElement("table");
@@ -225,9 +229,9 @@ function setCalFunction(row, coll) {
 		//	var x = calTbl.rows[2].cells[3].firstChild.value;
 		var value = calTbl.rows[row].cells[1].firstChild.value;
 		console.log(item + value);
-	//	if (value != "") {
-			sendItem("setCal:" + item + '=' + value);
-	//	}
+		//	if (value != "") {
+		sendItem("setCal:" + item + '=' + value);
+		//	}
 	}
 }
 
@@ -256,6 +260,13 @@ function initSettings() {
 	readCalInfo();
 	str = getItem("getSensorName");
 	makeNameTable(str);
+	var rbutton = document.getElementById("c1");
+	rbutton.addEventListener("click", setCurrentLo);
+	rbutton = document.getElementById("c2");
+	rbutton.addEventListener("click", setCurrentMed);
+	rbutton = document.getElementById("c3");
+	rbutton.addEventListener("click", setCurrentHi);
+
 	setInterval(function() { settingsTimer() }, 1000);
 }
 
@@ -288,11 +299,68 @@ function getInfo() {
 	}
 }
 
-
 function settingsTimer() {
-
 	if (document.visibilityState == "hidden")
 		return;
 	getInfo();
-
 }
+
+function startStop() {
+	calRun = !calRun;
+	var button = document.getElementById("StartStopButton");
+	if (calRun) {
+		button.innerHTML = "** Stop  **";
+		button.style.backgroundColor = "Red";
+		sendItem("setCurrent=" + testCurrent);
+	}
+	else {
+		button.innerHTML = "** Start **";
+		button.style.backgroundColor = "Blue";
+		sendItem("stopCal");
+	}
+}
+
+function setMode() {
+	var button = document.getElementById("setModeButton");
+	if (charge) {
+		button.innerHTML = "  Laden";
+		button.style.backgroundColor = "Red";
+		if (testCurrent < 0)
+			testCurrent = -testCurrent;
+	}
+	else {
+		button.innerHTML = "Ontladen";
+		button.style.backgroundColor = "Blue";
+		if (testCurrent > 0)
+			testCurrent = -testCurrent;
+	}
+	if (calRun)
+		sendItem("setCurrent=" + testCurrent);
+}
+
+function setCurrentLo() {
+	if (charge)
+		testCurrent = 100;
+	else
+		testCurrent = -100;
+	if (calRun)
+		sendItem("setCurrent=" + testCurrent);
+}
+
+function setCurrentMed() {
+	if (charge)
+		testCurrent = 400;
+	else
+		testCurrent = -400;
+	if (calRun)
+		sendItem("setCurrent=" + testCurrent);
+}
+function setCurrentHi() {
+	if (charge)
+		testCurrent = 800;
+	else
+		testCurrent = -800;
+	if (calRun)
+		sendItem("setCurrent=" + testCurrent);
+}
+

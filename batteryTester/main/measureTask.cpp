@@ -197,12 +197,11 @@ int getSensorNameScript(char *pBuffer, int count) {
 		scriptState++;
 		len += sprintf(pBuffer + len, "Actueel,Nieuw\n");
 		len += sprintf(pBuffer + len, "%s\n", userSettings.moduleName);
-		return len;
 		break;
 	default:
 		break;
 	}
-	return 0;
+	return (len);
 }
 
 int getInfoValuesScript(char *pBuffer, int count) {
@@ -218,12 +217,11 @@ int getInfoValuesScript(char *pBuffer, int count) {
 			len += sprintf(pBuffer + len, "%s,%3.2f,%3.2f,%3.2f\n", str, testChannel[n].current - userSettings.currentOffset[n], userSettings.currentOffset[n],
 					userSettings.currentGain[n]);
 		}
-		return len;
 		break;
 	default:
 		break;
 	}
-	return 0;
+	return (len);
 }
 
 // only build javascript table
@@ -235,22 +233,21 @@ int getCalValuesScript(char *pBuffer, int count) {
 		scriptState++;
 		len += sprintf(pBuffer + len, "%s\n", "Meting,Referentie,Stel in,Herstel");
 		len += sprintf(pBuffer + len, "%s\n", "Positie 1\n Positie 2\n Positie 3\n Positie 4\n");
-		return len;
 		break;
 	default:
 		break;
 	}
-	return 0;
+	return (len);
 }
 
 int saveSettingsScript(char *pBuffer, int count) {
 	saveSettings();
-	return 0;
+	return (0);
 }
 
 int cancelSettingsScript(char *pBuffer, int count) {
 	loadSettings();
-	return 0;
+	return (0);
 }
 
 calValues_t calValues;
@@ -272,16 +269,15 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 	case 0:
 		scriptState++;
 
-		len = sprintf(pBuffer + len, "%d,", (int) timeStamp++);
+		len = sprintf(pBuffer + len, "%d,", static_cast<int>(timeStamp++));
 		for (int n = 0; n < NR_CHANNELS; n++) {
 			len += sprintf(pBuffer + len, "%3.2f,", testChannel[n].voltage);
 		}
-		return len;
 		break;
 	default:
 		break;
 	}
-	return 0;
+	return (len);
 }
 
 int getChargeValuesScript(char *pBuffer, int count) {
@@ -319,25 +315,26 @@ int getChargeValuesScript(char *pBuffer, int count) {
 		scriptState++;
 		for (int n = 0; n < NR_CHANNELS; n++) {
 			if (n < (NR_CHANNELS - 1))
-				len += sprintf(pBuffer + len, "%4d,", (int) testChannel[n].status);
+				len += sprintf(pBuffer + len, "%4d,", static_cast<int>(testChannel[n].status));
 			else
-				len += sprintf(pBuffer + len, "%4d\n", (int) testChannel[n].status);
+				len += sprintf(pBuffer + len, "%4d\n", static_cast<int>(testChannel[n].status));
 		}
 		break;
 
 	default:
 		break;
 	}
-	return len;
+	return (len);
 }
 
 // these functions only work for one user!
 
 int getNewMeasValuesScript(char *pBuffer, int count) {
-	int left, len = 0;
+	int left =0;
+	int len = 0;
 	if (dayLogRxIdx != (dayLogTxIdx)) {  // something to send?
 		do {
-			len += sprintf(pBuffer + len, "%d,", (int) dayLog[dayLogRxIdx].timeStamp);
+			len += sprintf(pBuffer + len, "%d,", static_cast<int>(dayLog[dayLogRxIdx].timeStamp));
 			for (int n = 0; n < NR_CHANNELS; n++) {
 				len += sprintf(pBuffer + len, "%3.2f,", dayLog[dayLogRxIdx].voltage[n]);
 			}
@@ -350,7 +347,7 @@ int getNewMeasValuesScript(char *pBuffer, int count) {
 		} while ((dayLogRxIdx != dayLogTxIdx) && (left > 40));
 
 	}
-	return len;
+	return (len);
 }
 
 void parseCGIWriteData(char *buf, int received) {
