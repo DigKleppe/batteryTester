@@ -1,4 +1,4 @@
-var SIMULATE = false;
+var SIMULATE = true;
 
 var data2 = 0;
 var simValue1 = 0;

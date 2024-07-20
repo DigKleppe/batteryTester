@@ -103,10 +103,18 @@ input[type=text] {
 
 
 table {
-  width: 100%;
+/*   width: 100%; */
   border-collapse: collapse;
   font-size: 25pt;
+  margin: 4px 2px;
+  td {
+       border: 1px solid black;
+  }
+  tr {
+      height: 70px;
+  }
 }
+
 th.name  {
   width: 22%
 }
@@ -122,7 +130,6 @@ th.valueLong {
 td {
   text-align: center;
 }
-text-align: center;
 
 .button {
   border: none;

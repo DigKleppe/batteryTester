@@ -142,7 +142,7 @@ esp_err_t loadSettings() {
 		err |= nvs_get_blob(my_handle, "userSettings",(void *) &userSettings, &len);
 		switch (err) {
 		case ESP_OK:
-			ESP_LOGI(TAG, "OTABootSSID: %s", wifiSettings.SSID);
+			ESP_LOGI(TAG, "SSID: %s", wifiSettings.SSID);
 			break;
 		case ESP_ERR_NVS_NOT_FOUND:
 			ESP_LOGE(TAG, "The value is not initialized yet!");
@@ -161,6 +161,7 @@ esp_err_t loadSettings() {
 	if(strncmp(userSettings.checkstr,USERSETTINGS_CHECKSTR, strlen (USERSETTINGS_CHECKSTR) )	!= 0)
 	{
 		userSettings = userSettingsDefaults;
+		wifiSettings = wifiSettingsDefaults;
 		ESP_LOGE(TAG, "default usersettings loaded");
 		doSave = true;  // set filename for OTA via factory firmware
 	}

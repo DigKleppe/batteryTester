@@ -175,13 +175,45 @@ function updateAllDayTimeLabels(data) {
 }
 
 function simplot() {
-	simValue1 += 0.001;
-	simValue2 = Math.sin(simValue1) * 0.0001;
-	var str = "0,1,2,3,4,5,\n";
-	var str2;
-	for (var n = 0; n < 20; n++)
-		str2 = str + str2;
-	plotArray(str2);
+	var nrLines;
+
+	if (firstRequest) {
+		nrLines = 50;
+		firstRequest = false;
+	}
+	else
+		nrLines = 1;
+	var str = '';
+	for (var m = 0; m < nrLines; m++) {
+		tick++;
+		str = str + tick + ',';
+		for (var n = 0; n < NRItems; n++) {  // voltages
+			simValue1 += 0.1;
+			simValue2 = 1 + Math.sin(simValue1) * 0.4;
+			str = str + simValue2;
+			if (n < (NRItems - 1))
+				str = str + ',';
+			else
+				str = str + '\n';
+		}
+//		for (var n = 0; n < NRItems; n++) {  // status
+//			str = str + n;
+//			if (n < (NRItems - 1))
+//				str = str + ',';
+//			else
+//				str = str + ';';
+//		}
+//		for (var n = 0; n < NRItems; n++) {  // energy
+//			str = str + tick;
+//			tick++;
+//			if (n < (NRItems - 1))
+//				str = str + ',';
+//			else
+//				str = str + ';';
+//		}
+	}
+
+	plotArray(str);
 
 	for (var m = 1; m < NRItems; m++) { // time not used for now 
 		var value = simValue2; // from string to float
@@ -198,8 +230,8 @@ function plotArray(str) {
 		arr = arr2[p].split(",");
 		if (arr.length >= NRItems) {
 			for (var m = 1; m < NRItems; m++) { // time not used for now
-			if (	chartSeries[m] != -1 )   
-				plot(chartSeries[m] , arr[m]); 
+			if (chartSeries[m-1] != -1 )   
+				plot(chartSeries[m-1] , arr[m]); 
 			}
 		}
 	}

@@ -36,10 +36,11 @@ typedef struct {
   int current;
   int averagedCurrent;  // mA
   int measuredCapacity; // mAH
+
+  int inCharge;		// mAs
+  int outCharge;    // mAs
+
   int samples;
-  int measuredPower; // mW actual
-  int inPower;       // mW charged pPower
-  int outPower;      // mW decharged Power
   float voltage;
   float maxVoltage;
   float currentCalibration;
@@ -47,7 +48,7 @@ typedef struct {
 
 extern testChannel_t testChannel[NR_CHANNELS];
 extern bool setupNeeded;
-extern SemaphoreHandle_t LCDsemphr;
+extern QueueHandle_t LCDsemphr;
 
 #define MAXCHARGEDVOLATGE 1.9
 #define DECHARDEDVOLATAGE 0.9
@@ -65,7 +66,7 @@ typedef struct {
 	float current[NR_CHANNELS];
 } calValues_t;
 
-
+int getChargeValuesScript(char *pBuffer, int count);
 int getRTMeasValuesScript(char *pBuffer, int count) ;
 int getNewMeasValuesScript(char *pBuffer, int count);
 int getLogScript(char *pBuffer, int count);
