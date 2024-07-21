@@ -322,6 +322,7 @@ function startStop() {
 
 function setMode() {
 	var button = document.getElementById("setModeButton");
+	charge = !charge;
 	if (charge) {
 		button.innerHTML = "  Laden";
 		button.style.backgroundColor = "Red";

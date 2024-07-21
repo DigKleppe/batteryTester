@@ -260,11 +260,14 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 	switch (scriptState) {
 	case 0:
 		scriptState++;
-
 		len = sprintf(pBuffer + len, "%d,", static_cast<int>(timeStamp++));
 		for (int n = 0; n < NR_CHANNELS; n++) {
-			len += sprintf(pBuffer + len, "%3.2f,", testChannel[n].voltage);
+			if (n < (NR_CHANNELS - 1))
+				len += sprintf(pBuffer + len, "%3.2f,", testChannel[n].voltage);
+			else
+				len += sprintf(pBuffer + len, "%3.2f\n", testChannel[n].voltage);
 		}
+
 		break;
 	default:
 		break;
@@ -328,9 +331,11 @@ int getNewMeasValuesScript(char *pBuffer, int count) {
 		do {
 			len += sprintf(pBuffer + len, "%d,", static_cast<int>(dayLog[dayLogRxIdx].timeStamp));
 			for (int n = 0; n < NR_CHANNELS; n++) {
-				len += sprintf(pBuffer + len, "%3.2f,", dayLog[dayLogRxIdx].voltage[n]);
+				if (n < (NR_CHANNELS - 1))
+					len += sprintf(pBuffer + len, "%3.2f,", dayLog[dayLogRxIdx].voltage[n]);
+				else
+					len += sprintf(pBuffer + len, "%3.2f\n", dayLog[dayLogRxIdx].voltage[n]);
 			}
-			len += sprintf(pBuffer + len, "\n");
 			dayLogRxIdx++;
 			if (dayLogRxIdx > MAXDAYLOGVALUES)
 				dayLogRxIdx = 0;

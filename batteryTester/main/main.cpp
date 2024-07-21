@@ -147,7 +147,7 @@ void guiTask(void *pvParameter)
 
 extern "C" void app_main(void)
 {
-		esp_err_t err;
+	esp_err_t err;
 	LCDsemphr = xSemaphoreCreateRecursiveMutex();
 
 	vTaskDelay(100);
@@ -169,9 +169,9 @@ extern "C" void app_main(void)
 	gpio_set_direction(KEYPIN, GPIO_MODE_INPUT);
 	//  keysRepeat = 1; // only 1 key
 
-/*	xTaskCreate(&currentRegulatorTask, "crTask", 1024 * 2, NULL, configMAX_PRIORITIES, NULL);
+	xTaskCreate(&currentRegulatorTask, "crTask", 1024 * 2, NULL, configMAX_PRIORITIES, NULL);
 	xTaskCreate(&testTask, "testTask", 1024 * 4, NULL, 0, NULL);
-	xTaskCreate(&guiTask, "guiTask", 1024 * 4, NULL, 0, NULL);*/
+	xTaskCreate(&guiTask, "guiTask", 1024 * 4, NULL, 0, NULL);
 
 	wifiConnect();
 
