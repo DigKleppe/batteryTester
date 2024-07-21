@@ -17,6 +17,7 @@
 #include "hd44780.h"
 #include "hd44780ioClass/hd44780_NTCU20025ECPB_pinIO.h" 
 #include "settings.h"
+#include "mdns.h"
 #include <stdio.h>
 
 extern int scriptState;
@@ -164,15 +165,18 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_TESTMODE:
-				sprintf(LCDline + len, "test %4dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
+				sprintf(LCDline + len, "Test %4dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 				toggle = !toggle;
 				if (toggle)
 					testChannel[n].setCurrent = 100;
 				else
 					testChannel[n].setCurrent = 0;
 				break;
-			}
 
+			case STATUS_CALIBRATION:
+				sprintf(LCDline + len, "Cal %4dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
+				break;
+			}
 			if (xSemaphoreTakeRecursive( LCDsemphr, (TickType_t)0) == pdTRUE) {
 				LCDline[LCD_COLS] = 0; // limit to actual value
 				lcd.setCursor(0, n);
@@ -250,18 +254,6 @@ int cancelSettingsScript(char *pBuffer, int count) {
 	return (0);
 }
 
-calValues_t calValues;
-// @formatter:off
-char tempName[MAX_STRLEN];
-
-const CGIdesc_t writeVarDescriptors[] = {
-    { "Stroom", &calValues.current, FLT, NR_CHANNELS },
-    { "moduleName",tempName, STR, 1 }
-};
-
-#define NR_CALDESCRIPTORS (sizeof (writeVarDescriptors)/ sizeof (CGIdesc_t))
-// @formatter:on
-
 int getRTMeasValuesScript(char *pBuffer, int count) {
 	int len = 0;
 
@@ -330,7 +322,7 @@ int getChargeValuesScript(char *pBuffer, int count) {
 // these functions only work for one user!
 
 int getNewMeasValuesScript(char *pBuffer, int count) {
-	int left =0;
+	int left = 0;
 	int len = 0;
 	if (dayLogRxIdx != (dayLogTxIdx)) {  // something to send?
 		do {
@@ -345,32 +337,76 @@ int getNewMeasValuesScript(char *pBuffer, int count) {
 			left = count - len;
 
 		} while ((dayLogRxIdx != dayLogTxIdx) && (left > 40));
-
 	}
 	return (len);
 }
 
-void parseCGIWriteData(char *buf, int received) {
-	/*	if (strncmp(buf, "setCal:", 7) == 0) {  //
+calValues_t calValues;
+// @formatter:off
+char tempName[MAX_STRLEN];
+int calCurrent;
+int stopCal;
 
-	 float ref = (refSensorAverager.average() / 1000.0);
-	 for ( int n = 0; n < NR_CHANNELS; n++){
-	 if (lastTemperature[n] != ERRORTEMP ){
-	 float t =  ntcAverager[n].average() / 1000.0;
-	 userSettings.temperatureOffset[n] = t - ref;
-	 }
-	 }
-	 } else {
-	 if (strncmp(buf, "setName:", 8) == 0) {
-	 if (readActionScript(&buf[8], writeVarDescriptors, NR_CALDESCRIPTORS)) {
-	 if (strcmp(tempName, userSettings.moduleName) != 0) {
-	 strcpy(userSettings.moduleName, tempName);
-	 ESP_ERROR_CHECK(mdns_hostname_set(userSettings.moduleName));
-	 ESP_LOGI(TAG, "Hostname set to %s", userSettings.moduleName);
-	 saveSettings();
-	 }
-	 }
-	 }
-	 }*/
+const CGIdesc_t writeVarDescriptors[] = {
+    { "Positie 1", &calValues.current[0], FLT, 1 },
+	{ "Positie 2", &calValues.current[1], FLT, 1 },
+	{ "Positie 3", &calValues.current[2], FLT, 1 },
+	{ "Positie 4", &calValues.current[3], FLT, 1 },
+	{ "moduleName",tempName, STR, 1 },
+	{ "setCurrent", &calCurrent, INT, 1 },
+	{ "stopCal", &stopCal, INT, 1 },
+};
+
+#define NR_CALDESCRIPTORS (sizeof (writeVarDescriptors)/ sizeof (CGIdesc_t))
+// @formatter:on
+
+// parse items send by senditem (HTML post)
+
+void parseCGIWriteData(char *buf, int received) {
+	int idx = -1;
+	if (strncmp(buf, "setCal:", 7) == 0) {  //
+		idx = readActionScript(&buf[8], writeVarDescriptors, NR_CALDESCRIPTORS);
+		if (idx >= 0) {
+			if (testChannel[idx].averagedCurrent != 0) {
+				float measuredCurrent = static_cast<float>(testChannel[idx].averagedCurrent) / userSettings.currentGain[idx];
+				userSettings.currentGain[idx] = calValues.current[idx] / measuredCurrent;
+				saveSettings();
+			}
+		}
+	}
+	if (idx < 0) {
+		if (strncmp(buf, "setName:", 8) == 0) {
+			idx = readActionScript(&buf[8], writeVarDescriptors, NR_CALDESCRIPTORS);
+			if (idx >= 0) {
+				if (strcmp(tempName, userSettings.moduleName) != 0) {
+					strcpy(userSettings.moduleName, tempName);
+					ESP_ERROR_CHECK(mdns_hostname_set(userSettings.moduleName));
+					ESP_LOGI(TAG, "Hostname set to %s", userSettings.moduleName);
+					saveSettings();
+				}
+			}
+		}
+	}
+
+	if (idx < 0) { // none of above
+		idx = readActionScript(buf, writeVarDescriptors, NR_CALDESCRIPTORS);
+		switch (idx) {
+		case 5: // setCurrent -> switch to calibration mode
+			for (int n = 0; n < NR_CHANNELS; n++) {
+				testChannel[n].status = STATUS_CALIBRATION;
+				testChannel[n].setCurrent = calCurrent;
+			}
+			break;
+		case 6:
+			for (int n = 0; n < NR_CHANNELS; n++) {
+				testChannel[n].status = STATUS_NO_BAT;
+				testChannel[n].setCurrent = 0;
+			}
+			break;
+		default:
+			break;
+
+		}
+	}
 }
 

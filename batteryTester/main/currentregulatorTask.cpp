@@ -5,9 +5,6 @@
  *      Author: dig
  */
 
-//#include <algorithm>
-
-
 #include "Arduino.h"
 #include "INA226.h"
 #include "averager.h"
@@ -15,6 +12,7 @@
 #include "esp_log.h"
 #include "hal/gpio_types.h"
 #include "measureTask.h"
+#include "settings.h"
 
 static const char *TAG = "cr";
 
@@ -39,8 +37,6 @@ static const char *TAG = "cr";
 
 const gpio_num_t chargePin[] = { CHARGEPIN1, CHARGEPIN2, CHARGEPIN3, CHARGEPIN4 };
 const gpio_num_t deChargePin[] = { DECHARGEPIN1, DECHARGEPIN2, DECHARGEPIN3, DECHARGEPIN4 };
-
-const float calFactor[] = { CCAL1, CCAL2, CCAL3, CCAL4 };
 
 uint16_t manID[NR_CHANNELS];
 uint16_t dieId[NR_CHANNELS];
@@ -78,8 +74,6 @@ currentRegulatorTask (void *pvParameter)
   for (int n = 0; n < NR_CHANNELS; n++)
     {
       testChannel[n].status = STATUS_NO_BAT;
-      testChannel[n].currentCalibration = calFactor[n];
-
       if (!(ina[n]->begin ()))
         testChannel[n].status = STATUS_INA_ERROR;
       else
@@ -108,7 +102,7 @@ currentRegulatorTask (void *pvParameter)
               testChannel[n].voltage = vavg[n]->average () / 1000.0;
 
               //      testChannel[n].measuredPower = ina[n]->getPower();
-              testChannel[n].current = ((ina[n]->getShuntVoltage () * 1000.0) / RCURRENTSENSE) * testChannel[n].currentCalibration; // real time
+              testChannel[n].current = ((ina[n]->getShuntVoltage () * 1000.0) / RCURRENTSENSE) * userSettings.currentGain[n]; // real time
               iavg[n]->write (testChannel[n].current);
               testChannel[n].averagedCurrent = iavg[n]->average ();
               if (testChannel[n].setCurrent == 0)

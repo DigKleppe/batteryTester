@@ -25,7 +25,8 @@ typedef enum {
   STATUS_WAIT2,
   STATUS_CHARGED,
   STATUS_INA_ERROR,
-  STATUS_TESTMODE
+  STATUS_TESTMODE,
+  STATUS_CALIBRATION
 } testChannelStatus;
 
 typedef struct {
@@ -43,7 +44,6 @@ typedef struct {
   int samples;
   float voltage;
   float maxVoltage;
-  float currentCalibration;
 } testChannel_t;
 
 extern testChannel_t testChannel[NR_CHANNELS];

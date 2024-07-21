@@ -316,7 +316,7 @@ function startStop() {
 	else {
 		button.innerHTML = "** Start **";
 		button.style.backgroundColor = "Blue";
-		sendItem("stopCal");
+		sendItem("stopCal=1");
 	}
 }
 
