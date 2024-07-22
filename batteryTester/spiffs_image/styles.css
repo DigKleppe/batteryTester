@@ -73,6 +73,8 @@ input[type=checkbox]
   -moz-transform: scale(3); /* FF */
   -webkit-transform: scale(3); /* Safari and Chrome */
   -o-transform: scale(3); /* Opera */
+  width: 70px;
+  margin-bottom: 30px;
 }
 
 /* Might want to wrap a span around your checkbox text */
@@ -230,10 +232,18 @@ td {
     color: #ffffff;
     text-align: left;
 }
-.styled-table th,
+.styled-table th
+{
+    padding: 2px 5px;
+/*    text-align:left;*/
+	margin: 5px 0;
+	width: 40px;
+}
+
 .styled-table td {
-    padding: 12px 15px;
+    padding: 2px 5px;
     text-align:center;
+	margin: 5px 0;
 }
 
 .styled-table tbody tr {
@@ -248,4 +258,13 @@ td {
     border-bottom: 2px solid #009879;
 }
 
-
+.container {
+  justify-content: space-between;
+  flex-direction: column;
+  height: 100vh;
+  display: flex;
+}
+.container .btn-holder {
+  justify-content: flex-end;
+  display: flex;
+}
