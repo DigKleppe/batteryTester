@@ -244,7 +244,7 @@ function testInfo() {
 }
 
 function testCal() {
-	var str = "Meting,Referentie,Stel in,Herstel,\nTemperatuur\n RH\n CO2\n";
+	var str = "Stroom,Referentie,Stel in,Herstel,\nPositie 1\n Positie 2\n Positie 3\n Positie 4\n";
 	readCalInfo(str);
 }
 

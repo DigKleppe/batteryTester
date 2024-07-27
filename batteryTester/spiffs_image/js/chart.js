@@ -254,7 +254,9 @@ function plotArray(str) {
 
 function timer() {
 	var arr;
+	var arr2;
 	var str;
+	var chargeInfoTbl;
 	presc--
 	if (SIMULATE) {
 		simplot();
@@ -262,18 +264,17 @@ function timer() {
 	else {
 		if (presc == 0) {
 			presc = REQINTERVAL;
-			str = getRTMeasValues();
+			str = getItem ("getRTMeasValues");
 			arr = str.split(",");
-			// print RT values 
+			// print RT values xx
 			if (arr.length >= NRItems) {
 				if (arr[0] > 0) {
 					if (arr[0] != lastTimeStamp) {
 						lastTimeStamp = arr[0];
 						for (var m = 1; m < NRItems; m++) { // time not used for now 
-							var value = parseFloat(arr[m]); // from string to float
-							if (value < -100)
-								arr[m] = "--";
-							document.getElementById(displayNames[m]).innerHTML = arr[m];
+//							var value = parseFloat(arr[m]); // from string to float
+//							if (value < -100)
+//								arr[m] = "--";
 							if (chartSeries[m] != -1)
 								plot(chartSeries[m], arr[m]);
 						}
@@ -283,9 +284,18 @@ function timer() {
 				}
 			}
 			if (firstRequest) {
-				arr = getLogMeasValues();
+				arr =getItem("getLogMeasValues");
 				plotArray(arr);
 				firstRequest = false;
+			}
+			
+			chargeInfoTbl = document.getElementById("chargeInfoTable");
+			str = getItem ("getChargeValues");
+			arr = str.split(";");
+			for (var rows = 0; rows < arr.length ; rows++) {
+				arr2 = arr[rows].split(","); 
+				for (var m = 0; m < 4; m++) 
+					chargeInfoTbl.rows[rows+2].cells[m+1].innerHTML = arr2[m];
 			}
 		}
 	}

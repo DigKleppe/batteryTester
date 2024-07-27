@@ -23,6 +23,21 @@
 extern int scriptState;
 static const char *TAG = "testTask";
 
+
+static const char * statusText [] = {
+		{"Geen batterij"},
+		{"Instellen"},
+		{"Laden"},
+		{"-"},
+		{"Ontladen"},
+		{"Getest"},
+		{"-"},
+		{"Getest, geladen"},
+		{"Testmode"},
+		{"Calibratie"},
+		{"Fout"}
+};
+
 testChannel_t testChannel[NR_CHANNELS];
 extern bool currentRegulatorStarted;
 
@@ -73,7 +88,7 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_NO_BAT:
-				ESP_LOGI(TAG, "%d no battery %4.3f V", n + 1, testChannel[n].voltage);
+	//			ESP_LOGI(TAG, "%d no battery %4.3f V", n + 1, testChannel[n].voltage);
 				if (testChannel[n].voltage < ERRORVOLTAGE)
 					sprintf(LCDline + len, "* Fout * %3.2f V", testChannel[n].voltage);
 				else {
@@ -214,11 +229,11 @@ int getInfoValuesScript(char *pBuffer, int count) {
 	switch (scriptState) {
 	case 0:
 		scriptState++;
-		len += sprintf(pBuffer + len, "%s\n", "Meting,Actueel,Offset,Gain");
+		len += sprintf(pBuffer + len, "%s\n", "Positie,Actueel,Offset,Gain");
 		for (int n = 0; n < NR_CHANNELS; n++) {
-			sprintf(str, "Positie %d", n + 1);
-			len += sprintf(pBuffer + len, "%s,%3.2f, 0, 1.0\n", str, testChannel[n].voltage); // no gain and offset needed for voltage
-			len += sprintf(pBuffer + len, "%s,%3.2f,%3.2f,%3.2f\n", str, testChannel[n].current - userSettings.currentOffset[n], userSettings.currentOffset[n],
+			sprintf(str, "%d", n + 1);
+			len += sprintf(pBuffer + len, "%s spanning,%3.2f, -, -\n", str, testChannel[n].voltage); // no gain and offset needed for voltage
+			len += sprintf(pBuffer + len, "%s stroom ,%3.2f,%3.2f,%3.2f\n", str, testChannel[n].current - userSettings.currentOffset[n], userSettings.currentOffset[n],
 					userSettings.currentGain[n]);
 		}
 		break;
@@ -235,8 +250,8 @@ int getCalValuesScript(char *pBuffer, int count) {
 	switch (scriptState) {
 	case 0:
 		scriptState++;
-		len += sprintf(pBuffer + len, "%s\n", "Meting,Referentie,Stel in,Herstel");
-		len += sprintf(pBuffer + len, "%s\n", "Positie 1\n Positie 2\n Positie 3\n Positie 4\n");
+		len += sprintf(pBuffer + len, "%s", "Positie,Referentie,Stel in,Herstel\n");
+		len += sprintf(pBuffer + len, "%s", "Positie1\n Positie2\n Positie 3\n Positie 4\n");
 		break;
 	default:
 		break;
@@ -282,43 +297,37 @@ int getChargeValuesScript(char *pBuffer, int count) {
 	case 0:
 		scriptState++;
 		for (int n = 0; n < NR_CHANNELS; n++) {
-			if (n < (NR_CHANNELS - 1))
-				len += sprintf(pBuffer + len, "%4d,", testChannel[n].measuredCapacity);
-			else
-				len += sprintf(pBuffer + len, "%4d;", testChannel[n].measuredCapacity);
+			len += sprintf(pBuffer + len, "%s,", statusText[static_cast<int>(testChannel[n].status)]);
 		}
 		break;
 	case 1:
 		scriptState++;
 		for (int n = 0; n < NR_CHANNELS; n++) {
-			if (n < (NR_CHANNELS - 1))
-				len += sprintf(pBuffer + len, "%4d,", testChannel[n].inCharge / 3600);
-			else
-				len += sprintf(pBuffer + len, "%4d;", testChannel[n].inCharge / 3600);
+			len += sprintf(pBuffer + len, "%4d,", testChannel[n].measuredCapacity);
 		}
 		break;
 	case 2:
 		scriptState++;
 		for (int n = 0; n < NR_CHANNELS; n++) {
-			if (n < (NR_CHANNELS - 1))
-				len += sprintf(pBuffer + len, "%4d,", testChannel[n].outCharge / 3600);
-			else
-				len += sprintf(pBuffer + len, "%4d;", testChannel[n].outCharge / 3600);
+			len += sprintf(pBuffer + len, "%3.2f,", testChannel[n].voltage);
 		}
 		break;
 	case 3:
 		scriptState++;
 		for (int n = 0; n < NR_CHANNELS; n++) {
-			if (n < (NR_CHANNELS - 1))
-				len += sprintf(pBuffer + len, "%4d,", static_cast<int>(testChannel[n].status));
-			else
-				len += sprintf(pBuffer + len, "%4d\n", static_cast<int>(testChannel[n].status));
+			len += sprintf(pBuffer + len, "%4d,", testChannel[n].outCharge / 3600);
 		}
+		break;
+	case 4:
+		scriptState++;
 		break;
 
 	default:
 		break;
 	}
+
+	if ( len > 0 )
+		len += sprintf(pBuffer + len, ";");
 	return (len);
 }
 
