@@ -10,7 +10,6 @@ var TEMPINFOROW = 1;
 var RHINFOROW = 2;
 var CO2INFOROW = 3;
 
-
 function sendItem(item) {
 	console.log("sendItem: " + item);
 	if (SIMULATE)
