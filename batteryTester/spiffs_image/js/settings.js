@@ -261,6 +261,9 @@ function initSettings() {
 	str = getItem("getSensorName");
 	makeNameTable(str);
 	var rbutton = document.getElementById("c1");
+	rbutton.checked = true;
+	testCurrent = rbutton.value;
+	
 	rbutton.addEventListener("click", setCurrentLo);
 	rbutton = document.getElementById("c2");
 	rbutton.addEventListener("click", setCurrentMed);

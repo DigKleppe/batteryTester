@@ -24,8 +24,6 @@
 const tCGI *g_pCGIs;
 int g_iNumCGIs;
 
-#define NUM_CGIurls 11
-
 // http:/192.168.2.7///cgi-bin/getLogMeasValues
 
 const char* startCGIscript(int iIndex, char *pcParam);
@@ -44,7 +42,7 @@ const static char http_html_hdr[] = "HTTP/1.1 200 OK\nContent-type: text/html\n\
 int readDescriptors(char *pBuffer, int count);
 // @formatter:off
 // do not alter
-static const tCGI CGIurls[NUM_CGIurls] = {
+static const tCGI CGIurls[] = {
 		{ "/cgi-bin/readvar", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) readVarScript },  // !!!!!! index  !!
 		{ "/cgi-bin/writevar", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) readVarScript },  // !!!!!! index  !!
 		{ "/action_page.php", (tCGIHandler_t) readCGIvalues,(CGIresponseFileHandler_t) actionRespScript },
@@ -56,7 +54,11 @@ static const tCGI CGIurls[NUM_CGIurls] = {
 		{ "/cgi-bin/getSensorName", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getSensorNameScript},
 		{ "/cgi-bin/saveSettings", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) saveSettingsScript},
 		{ "/cgi-bin/cancelSettings", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) cancelSettingsScript},
+    
 	};
+
+#define NUM_CGIurls ( sizeof (CGIurls)/sizeof( tCGI))
+
 
 static const CGIdesc_t CGIdescriptors[] = {
 	//	{ "measValues", (void*) &measValues, STR, sizeof(measValues) / sizeof(char*) },
@@ -152,10 +154,11 @@ int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size) {
 							}
 						}
 						success = true;
-						tableItem++;
-						break;
+						tableItem = m;
+		 				break;
 					}
 					CGIdescTable++;
+				
 				}
 				break;
 			}

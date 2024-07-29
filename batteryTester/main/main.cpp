@@ -1,4 +1,5 @@
 #include "driver/gpio.h"
+#include "esp_event.h"
 #include "esp_log.h"
 #include "keys.h"
 #include "settings.h"
@@ -169,9 +170,9 @@ extern "C" void app_main(void)
 	gpio_set_direction(KEYPIN, GPIO_MODE_INPUT);
 	//  keysRepeat = 1; // only 1 key
 
-//	xTaskCreate(&currentRegulatorTask, "crTask", 1024 * 2, NULL, configMAX_PRIORITIES, NULL);
-//	xTaskCreate(&testTask, "testTask", 1024 * 4, NULL, 0, NULL);
-//	xTaskCreate(&guiTask, "guiTask", 1024 * 4, NULL, 0, NULL);
+	xTaskCreate(&currentRegulatorTask, "crTask", 1024 * 4, NULL, configMAX_PRIORITIES, NULL);
+	xTaskCreate(&testTask, "testTask", 1024 * 4, NULL, 0, NULL);
+	xTaskCreate(&guiTask, "guiTask", 1024 * 4, NULL, 0, NULL);
 
 	wifiConnect();
 

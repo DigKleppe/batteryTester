@@ -19,21 +19,18 @@ static const char *TAG = "cr";
 #define INA_AVGS INA226_1_SAMPLE // INA226_4_SAMPLES //INA226_16_SAMPLES // INA226_1024_SAMPLES
 #define RCURRENTSENSE 0.1        // on INA board
 
-#define AVGS 32 // current and voltage
+#define AVGS 64 // current and voltage
 
 #define CHARGEPIN1 GPIO_NUM_1
 #define DECHARGEPIN1 GPIO_NUM_2
 #define CHARGEPIN2 GPIO_NUM_41
-#define DECHARGEPIN2 GPIO_NUM_40
+#define DECHARGEPIN2 GPIO_NUM_42
 #define CHARGEPIN3 GPIO_NUM_39
-#define DECHARGEPIN3 GPIO_NUM_38
+#define DECHARGEPIN3 GPIO_NUM_40
 #define CHARGEPIN4 GPIO_NUM_37
-#define DECHARGEPIN4 GPIO_NUM_36
+#define DECHARGEPIN4 GPIO_NUM_38
 
-#define CCAL1 380.0 / 400.0
-#define CCAL2 1 // todo
-#define CCAL3 1
-#define CCAL4 1
+
 
 const gpio_num_t chargePin[] = { CHARGEPIN1, CHARGEPIN2, CHARGEPIN3, CHARGEPIN4 };
 const gpio_num_t deChargePin[] = { DECHARGEPIN1, DECHARGEPIN2, DECHARGEPIN3, DECHARGEPIN4 };
@@ -85,6 +82,9 @@ currentRegulatorTask (void *pvParameter)
           manID[n] = ina[n]->getManufacturerID ();
           dieId[n] = ina[n]->getDieID ();
         }
+     
+      gpio_reset_pin(chargePin[n]);
+      gpio_reset_pin(deChargePin[n]);
       gpio_set_level (chargePin[n], 0);
       gpio_set_level (deChargePin[n], 0);
       gpio_set_direction (chargePin[n], GPIO_MODE_OUTPUT);

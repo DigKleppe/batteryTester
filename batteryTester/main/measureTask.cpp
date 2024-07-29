@@ -22,6 +22,7 @@
 
 extern int scriptState;
 static const char *TAG = "testTask";
+static const int FULLDEBOUNCES = 20;
 
 
 static const char * statusText [] = {
@@ -40,13 +41,22 @@ static const char * statusText [] = {
 
 testChannel_t testChannel[NR_CHANNELS];
 extern bool currentRegulatorStarted;
+int debounce[NR_CHANNELS];
 
 bool isFull(int idx) {
 	float diff;
 
-	if (testChannel[idx].voltage > MAXCHARGEDVOLATGE) {
-		ESP_LOGE(TAG, "full voltage max voltage exeeded ");
-		return true;
+	if (testChannel[idx].voltage > MAXCHARGEDVOLATGE) { // or bad contact 
+		debounce[idx]--;
+		if( debounce[idx] == 0 ) {
+			ESP_LOGE(TAG, "full voltage max voltage exeeded ");
+			debounce[idx]= FULLDEBOUNCES; 
+			return true;
+		}
+		return false;
+	}
+	else {
+		debounce[idx]= FULLDEBOUNCES; 
 	}
 	diff = testChannel[idx].maxVoltage - testChannel[idx].voltage;
 	if (diff > CHARGEDDROP) {
@@ -64,6 +74,8 @@ void testTask(void *pvParameter) {
 	char LCDline[400];
 	int len;
 	bool toggle;
+	int displayTimer[NR_CHANNELS];
+	bool displayToggle[NR_CHANNELS];
 
 	while (!currentRegulatorStarted)
 		vTaskDelay(100);
@@ -76,6 +88,7 @@ void testTask(void *pvParameter) {
 		}
 		testChannel[n].chargeCurrent = 400;
 		testChannel[n].deChargeCurrent = 400;
+
 	}
 	xLastWakeTime = xTaskGetTickCount();
 	while (1) {
@@ -100,7 +113,10 @@ void testTask(void *pvParameter) {
 						testChannel[n].maxVoltage = 0;
 						testChannel[n].setCurrent = 0;
 						testChannel[n].status = STATUS_SETUP;
-					} else {
+						debounce[n] = FULLDEBOUNCES;
+						displayTimer[n] = 10;
+						displayToggle[n] = true;
+				 	} else {
 						strcpy(LCDline + len, "Geen batterij");
 					}
 				}
@@ -110,7 +126,7 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_CHARGING:
-				ESP_LOGI(TAG, "%d charging %3d mA %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage);
+				ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
 				sprintf(LCDline + len, "L %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 				testChannel[n].inCharge += testChannel[n].averagedCurrent; // in mAs
 				if (isFull(n)) {
@@ -154,6 +170,7 @@ void testTask(void *pvParameter) {
 					testChannel[n].inCharge = 0;
 					testChannel[n].status = STATUS_TESTED;
 					testChannel[n].maxVoltage = 0;
+					debounce[n] = FULLDEBOUNCES;
 				}
 				break;
 
@@ -171,16 +188,25 @@ void testTask(void *pvParameter) {
 
 			case STATUS_CHARGED:
 				ESP_LOGI(TAG, "%d ready %4d mA %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage);
-
-				sprintf(LCDline + len, "T *%4dmAh* Vol", testChannel[n].measuredCapacity);
-
+				displayTimer[n]--;
+				if ( displayTimer[n] == 0){
+					displayTimer[n] = 5;
+					displayToggle[n] = !displayToggle[n];
+				}	
+				if (displayToggle[n])
+					sprintf(LCDline + len, "*%4dmAh*  Vol", testChannel[n].measuredCapacity);
+				else 
+					sprintf(LCDline + len, "%4.3fV     Vol", testChannel[n].voltage);
+					
 				if (testChannel[n].voltage > NOBATVOLTAGE) {
 					testChannel[n].status = STATUS_NO_BAT;
+					displayTimer[n] = 10;
+					displayToggle[n] = true;
 				}
 				break;
 
 			case STATUS_TESTMODE:
-				sprintf(LCDline + len, "Test %4dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
+				sprintf(LCDline + len, "Tm %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 				toggle = !toggle;
 				if (toggle)
 					testChannel[n].setCurrent = 100;
@@ -189,7 +215,7 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_CALIBRATION:
-				sprintf(LCDline + len, "Cal %4dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
+				sprintf(LCDline + len, "Cal %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 				break;
 			}
 			if (xSemaphoreTakeRecursive( LCDsemphr, (TickType_t)0) == pdTRUE) {
@@ -251,7 +277,7 @@ int getCalValuesScript(char *pBuffer, int count) {
 	case 0:
 		scriptState++;
 		len += sprintf(pBuffer + len, "%s", "Positie,Referentie,Stel in,Herstel\n");
-		len += sprintf(pBuffer + len, "%s", "Positie1\n Positie2\n Positie 3\n Positie 4\n");
+		len += sprintf(pBuffer + len, "%s", "Positie 1\n Positie 2\n Positie 3\n Positie 4\n");
 		break;
 	default:
 		break;
@@ -333,6 +359,7 @@ int getChargeValuesScript(char *pBuffer, int count) {
 
 // these functions only work for one user!
 
+
 int getNewMeasValuesScript(char *pBuffer, int count) {
 	int left = 0;
 	int len = 0;
@@ -345,7 +372,7 @@ int getNewMeasValuesScript(char *pBuffer, int count) {
 				else
 					len += sprintf(pBuffer + len, "%3.2f\n", dayLog[dayLogRxIdx].voltage[n]);
 			}
-			dayLogRxIdx++;
+			dayLogRxIdx++;	
 			if (dayLogRxIdx > MAXDAYLOGVALUES)
 				dayLogRxIdx = 0;
 			left = count - len;
@@ -379,7 +406,7 @@ const CGIdesc_t writeVarDescriptors[] = {
 void parseCGIWriteData(char *buf, int received) {
 	int idx = -1;
 	if (strncmp(buf, "setCal:", 7) == 0) {  //
-		idx = readActionScript(&buf[8], writeVarDescriptors, NR_CALDESCRIPTORS);
+		idx = readActionScript(&buf[7], writeVarDescriptors, NR_CALDESCRIPTORS);
 		if (idx >= 0) {
 			if (testChannel[idx].averagedCurrent != 0) {
 				float measuredCurrent = static_cast<float>(testChannel[idx].averagedCurrent) / userSettings.currentGain[idx];

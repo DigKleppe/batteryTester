@@ -13,7 +13,7 @@
 
 extern hd44780_NTCU20025ECPB_pinIO lcd;
 
-#define LCD_COLS 20
+#define LCD_COLS 16
 #define LCD_ROWS 4
 
 #endif /* MAIN_INCLUDE_LCD_H_ */

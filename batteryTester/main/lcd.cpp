@@ -6,6 +6,7 @@
  */
 
 #include "lcd.h"
+#include "hd44780.h"
 
 const int rs = 15, rw = 16, en = 17, db4 = 4, db5 = 5, db6 = 6,
           db7 = 7; // for all other devices
@@ -18,13 +19,6 @@ static const int dummyvar = 0; // dummy declaration for older broken IDEs!!!!
 
 #endif
 
-#ifndef LCD_COLS
-#define LCD_COLS 20
-#endif
-
-#ifndef LCD_ROWS
-#define LCD_ROWS 4
-#endif
 
 // Data format is for each custom character is 8 bytes
 // Pixels within the bytes is as follows:

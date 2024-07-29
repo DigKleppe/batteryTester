@@ -77,5 +77,8 @@ int cancelSettingsScript (char *pBuffer, int count);
 int calibrateRespScript(char *pBuffer, int count);
 int getSensorNameScript (char *pBuffer, int count);
 void parseCGIWriteData(char *buf, int received);
+void setCurrentScript(char *buf, int received);
+void stopCalScript(char *buf, int received);
+
 
 #endif /* MAIN_INCLUDE_MEASURETASK_H_ */

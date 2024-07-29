@@ -10,7 +10,7 @@ var table;
 var presc = 1;
 var simMssgCnts = 0;
 var lastTimeStamp = 0;
-var REQINTERVAL = 30; // sec
+var REQINTERVAL = 1; // sec
 var firstRequest = true;
 var plotTimer = 6; // every 60 seconds plot averaged value
 var rows = 0;
