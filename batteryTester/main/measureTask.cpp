@@ -76,6 +76,7 @@ void testTask(void *pvParameter) {
 	bool toggle;
 	int displayTimer[NR_CHANNELS];
 	bool displayToggle[NR_CHANNELS];
+	log_t log;
 
 	while (!currentRegulatorStarted)
 		vTaskDelay(100);
@@ -94,6 +95,8 @@ void testTask(void *pvParameter) {
 	while (1) {
 		memset(LCDline, 0, LCD_COLS + 1); // clr buffer
 		for (int n = 0; n < NR_CHANNELS; n++) {
+
+			log.voltage[n] = testChannel[n].voltage;
 			len = sprintf(LCDline, "%d ", n + 1);
 			switch (testChannel[n].status) {
 			case STATUS_INA_ERROR:
@@ -229,6 +232,7 @@ void testTask(void *pvParameter) {
 				xSemaphoreGiveRecursive(LCDsemphr);
 			}
 		}
+		addToLog(log);
 		xTaskDelayUntil(&xLastWakeTime, 1000);
 	}
 }
@@ -258,7 +262,7 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		len += sprintf(pBuffer + len, "%s\n", "Positie,Actueel,Offset,Gain");
 		for (int n = 0; n < NR_CHANNELS; n++) {
 			sprintf(str, "%d", n + 1);
-			len += sprintf(pBuffer + len, "%s spanning,%3.2f, -, -\n", str, testChannel[n].voltage); // no gain and offset needed for voltage
+			len += sprintf(pBuffer + len, "%s spanning,%3.3f, -, -\n", str, testChannel[n].voltage); // no gain and offset needed for voltage
 			len += sprintf(pBuffer + len, "%s stroom ,%3.2f,%3.2f,%3.2f\n", str, testChannel[n].current - userSettings.currentOffset[n], userSettings.currentOffset[n],
 					userSettings.currentGain[n]);
 		}
@@ -304,9 +308,9 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 		len = sprintf(pBuffer + len, "%d,", static_cast<int>(timeStamp++));
 		for (int n = 0; n < NR_CHANNELS; n++) {
 			if (n < (NR_CHANNELS - 1))
-				len += sprintf(pBuffer + len, "%3.2f,", testChannel[n].voltage);
+				len += sprintf(pBuffer + len, "%3.3f,", testChannel[n].voltage);
 			else
-				len += sprintf(pBuffer + len, "%3.2f\n", testChannel[n].voltage);
+				len += sprintf(pBuffer + len, "%3.3f\n", testChannel[n].voltage);
 		}
 
 		break;
@@ -335,7 +339,7 @@ int getChargeValuesScript(char *pBuffer, int count) {
 	case 2:
 		scriptState++;
 		for (int n = 0; n < NR_CHANNELS; n++) {
-			len += sprintf(pBuffer + len, "%3.2f,", testChannel[n].voltage);
+			len += sprintf(pBuffer + len, "%3.3f,", testChannel[n].voltage);
 		}
 		break;
 	case 3:
@@ -367,11 +371,9 @@ int getNewMeasValuesScript(char *pBuffer, int count) {
 		do {
 			len += sprintf(pBuffer + len, "%d,", static_cast<int>(dayLog[dayLogRxIdx].timeStamp));
 			for (int n = 0; n < NR_CHANNELS; n++) {
-				if (n < (NR_CHANNELS - 1))
-					len += sprintf(pBuffer + len, "%3.2f,", dayLog[dayLogRxIdx].voltage[n]);
-				else
-					len += sprintf(pBuffer + len, "%3.2f\n", dayLog[dayLogRxIdx].voltage[n]);
+				len += sprintf(pBuffer + len, "%3.3f,", dayLog[dayLogRxIdx].voltage[n]);
 			}
+			len += sprintf(pBuffer + len, "\n");
 			dayLogRxIdx++;	
 			if (dayLogRxIdx > MAXDAYLOGVALUES)
 				dayLogRxIdx = 0;

@@ -17,7 +17,7 @@ var rows = 0;
 
 var MINUTESPERTICK = 5;// log interval 
 var LOGDAYS = 1;
-var MAXPOINTS = LOGDAYS * 24 * 60 / MINUTESPERTICK;
+var MAXPOINTS = LOGDAYS * 24 * 60 * 60
 
 var dayNames = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
 var displayNames = ["", "1", "2", "3", "4"];

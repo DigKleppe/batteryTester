@@ -344,9 +344,9 @@ function setMode() {
 
 function setCurrentLo() {
 	if (charge)
-		testCurrent = 100;
+		testCurrent = 0;
 	else
-		testCurrent = -100;
+		testCurrent = -0;
 	if (calRun)
 		sendItem("setCurrent=" + testCurrent);
 }
