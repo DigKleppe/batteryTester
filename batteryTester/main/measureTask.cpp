@@ -18,6 +18,7 @@
 #include "hd44780ioClass/hd44780_NTCU20025ECPB_pinIO.h" 
 #include "settings.h"
 #include "mdns.h"
+#include "averager.h"
 #include <stdio.h>
 
 extern int scriptState;
@@ -133,6 +134,7 @@ void testTask(void *pvParameter) {
 						debounce[n] = FULLDEBOUNCES;
 						displayTimer[n] = 10;
 						displayToggle[n] = true;
+						measTimer[n] = MEASINTERVAL;
 				 	} else {
 						strcpy(LCDline + len, "Geen batterij");
 					}
@@ -161,6 +163,38 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_CHARGING_MEAS1;
+				ESP_LOGI(TAG, "%d charging meas1  %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
+				sprintf(LCDline + len, "M  %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
+
+				testChannel[n].inCharge += testChannel[n].averagedCurrent; // in mAs
+
+
+				if (measTimer[n]-- == 0) { // wait until the current is zero
+					avgm[n]->clear();
+					measTimer[n]= MEASTIME;
+					testChannel[n].status = STATUS_CHARGING_MEAS2;
+				}
+				break;
+
+			case STATUS_CHARGING_MEAS2:
+				ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
+				sprintf(LCDline + len, "Measuring %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
+
+				avgm[n]->write (testChannel[n].voltage);
+				if (measTimer[n]-- == 0){
+					measTimer[n] = MEASINTERVAL;
+					testChannel[n].voltage = avgm[n]->average();
+					if (isFull(n)) {
+							testChannel[n].setCurrent = 0;
+							testChannel[n].status = STATUS_WAIT1;
+					}
+					else {
+						testChannel[n].status = STATUS_CHARGING;
+						testChannel[n].setCurrent = testChannel[n].chargeCurrent;
+					}
+				}
+
+				break;
 
 
 
