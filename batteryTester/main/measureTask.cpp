@@ -23,12 +23,23 @@
 extern int scriptState;
 static const char *TAG = "testTask";
 static const int FULLDEBOUNCES = 20;
+static const int MEASINTERVAL = 60; // every 60 seconds measure voltage without current
+static const int MEASTIME = 10;
+
+Averager avgm1 (MEASTIME);
+Averager avgm2 (MEASTIME);
+Averager avgm3 (MEASTIME);
+Averager avgm4 (MEASTIME);
+
+Averager *avgm[] = { &avgm1, &avgm2, &avgm3, &avgm4 };
 
 
 static const char * statusText [] = {
 		{"Geen batterij"},
 		{"Instellen"},
 		{"Laden"},
+		{"Meten"},
+		{"Meten"},
 		{"-"},
 		{"Ontladen"},
 		{"Getest"},
@@ -61,7 +72,8 @@ bool isFull(int idx) {
 	diff = testChannel[idx].maxVoltage - testChannel[idx].voltage;
 	if (diff > CHARGEDDROP) {
 		ESP_LOGE(TAG, "full voltage dropped %f ", diff);
-		return true;
+		return true;STATUS_CHARGING_MEAS1,
+
 	}
 	if (testChannel[idx].maxVoltage < testChannel[idx].voltage)
 		testChannel[idx].maxVoltage = testChannel[idx].voltage;
@@ -76,6 +88,7 @@ void testTask(void *pvParameter) {
 	bool toggle;
 	int displayTimer[NR_CHANNELS];
 	bool displayToggle[NR_CHANNELS];
+	int measTimer[NR_CHANNELS];
 	log_t log;
 
 	while (!currentRegulatorStarted)
@@ -90,7 +103,8 @@ void testTask(void *pvParameter) {
 		testChannel[n].chargeCurrent = 400;
 		testChannel[n].deChargeCurrent = 400;
 
-	}
+	}STATUS_CHARGING_MEAS1,
+
 	xLastWakeTime = xTaskGetTickCount();
 	while (1) {
 		memset(LCDline, 0, LCD_COLS + 1); // clr buffer
@@ -132,11 +146,23 @@ void testTask(void *pvParameter) {
 				ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
 				sprintf(LCDline + len, "L %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 				testChannel[n].inCharge += testChannel[n].averagedCurrent; // in mAs
+
+				if (measTimer[n]-- == 0){
+					testChannel[n].setCurrent = 0; // measure voltage without current
+
+					measTimer[n] = 5;
+					testChannel[n].status = STATUS_CHARGING_MEAS1;
+				}
+
 				if (isFull(n)) {
 					testChannel[n].setCurrent = 0;
 					testChannel[n].status = STATUS_WAIT1;
 				}
 				break;
+
+			case STATUS_CHARGING_MEAS1;
+
+
 
 			case STATUS_WAIT1:
 				sprintf(LCDline + len, "O %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
