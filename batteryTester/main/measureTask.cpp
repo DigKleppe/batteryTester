@@ -73,7 +73,7 @@ bool isFull(int idx) {
 	diff = testChannel[idx].maxVoltage - testChannel[idx].voltage;
 	if (diff > CHARGEDDROP) {
 		ESP_LOGE(TAG, "full voltage dropped %f ", diff);
-		return true;STATUS_CHARGING_MEAS1,
+		return true;
 
 	}
 	if (testChannel[idx].maxVoltage < testChannel[idx].voltage)
@@ -103,8 +103,7 @@ void testTask(void *pvParameter) {
 		}
 		testChannel[n].chargeCurrent = 400;
 		testChannel[n].deChargeCurrent = 400;
-
-	}STATUS_CHARGING_MEAS1,
+	}
 
 	xLastWakeTime = xTaskGetTickCount();
 	while (1) {
@@ -162,7 +161,7 @@ void testTask(void *pvParameter) {
 				}
 				break;
 
-			case STATUS_CHARGING_MEAS1;
+			case STATUS_CHARGING_MEAS1:
 				ESP_LOGI(TAG, "%d charging meas1  %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
 				sprintf(LCDline + len, "M  %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 
@@ -178,7 +177,7 @@ void testTask(void *pvParameter) {
 
 			case STATUS_CHARGING_MEAS2:
 				ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
-				sprintf(LCDline + len, "Measuring %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
+				sprintf(LCDline + len, "Measuring %4.3fV", testChannel[n].voltage);
 
 				avgm[n]->write (testChannel[n].voltage);
 				if (measTimer[n]-- == 0){
