@@ -24,7 +24,7 @@
 extern int scriptState;
 static const char *TAG = "testTask";
 static const int FULLDEBOUNCES = 20;
-static const int MEASINTERVAL = 60; // every 60 seconds measure voltage without current
+static const int MEASINTERVAL = 300; // every 60 seconds measure voltage without current
 static const int MEASTIME = 10;
 
 Averager avgm1 (MEASTIME);
@@ -71,6 +71,7 @@ bool isFull(int idx) {
 		debounce[idx]= FULLDEBOUNCES; 
 	}
 	diff = testChannel[idx].maxVoltage - testChannel[idx].voltage;
+
 	if (diff > CHARGEDDROP) {
 		ESP_LOGE(TAG, "full voltage dropped %f ", diff);
 		return true;
@@ -78,6 +79,7 @@ bool isFull(int idx) {
 	}
 	if (testChannel[idx].maxVoltage < testChannel[idx].voltage)
 		testChannel[idx].maxVoltage = testChannel[idx].voltage;
+	ESP_LOGI(TAG, "Vmax: %4.3f V", testChannel[idx].maxVoltage);
 	return false;
 }
 
@@ -144,7 +146,7 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_CHARGING:
-				ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
+			//	ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
 				sprintf(LCDline + len, "L %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 				testChannel[n].inCharge += testChannel[n].averagedCurrent; // in mAs
 
@@ -155,19 +157,19 @@ void testTask(void *pvParameter) {
 					testChannel[n].status = STATUS_CHARGING_MEAS1;
 				}
 
-				if (isFull(n)) {
+/*				if (isFull(n)) {
 					testChannel[n].setCurrent = 0;
 					testChannel[n].status = STATUS_WAIT1;
-				}
+				}*/
 				break;
 
 			case STATUS_CHARGING_MEAS1:
-				ESP_LOGI(TAG, "%d charging meas1  %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
+			//	ESP_LOGI(TAG, "%d charging meas1  %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
 				sprintf(LCDline + len, "M  %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 
 				testChannel[n].inCharge += testChannel[n].averagedCurrent; // in mAs
 
-
+//				if ( testChannel[n].averagedCurrent < 5) {
 				if (measTimer[n]-- == 0) { // wait until the current is zero
 					avgm[n]->clear();
 					measTimer[n]= MEASTIME;
@@ -176,21 +178,26 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_CHARGING_MEAS2:
-				ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
+			//	ESP_LOGI(TAG, "%d charging meas 2%3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
 				sprintf(LCDline + len, "Measuring %4.3fV", testChannel[n].voltage);
 
-				avgm[n]->write (testChannel[n].voltage);
+				avgm[n]->write (testChannel[n].voltage * 1000.0);
 				if (measTimer[n]-- == 0){
 					measTimer[n] = MEASINTERVAL;
-					testChannel[n].voltage = avgm[n]->average();
-					if (isFull(n)) {
+					testChannel[n].voltage = avgm[n]->average() / 1000.0;
+					ESP_LOGI(TAG, "%d Vmeas %4.3f", n + 1, testChannel[n].voltage);
+					isFull(n);
+			/*		if (isFull(n)) {
 							testChannel[n].setCurrent = 0;
 							testChannel[n].status = STATUS_WAIT1;
 					}
 					else {
 						testChannel[n].status = STATUS_CHARGING;
 						testChannel[n].setCurrent = testChannel[n].chargeCurrent;
-					}
+					}*/
+					testChannel[n].status = STATUS_CHARGING;
+					testChannel[n].setCurrent = testChannel[n].chargeCurrent;
+
 				}
 
 				break;

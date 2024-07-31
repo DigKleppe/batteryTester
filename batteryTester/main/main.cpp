@@ -34,7 +34,7 @@ myKey_t getKeyPins(void)
 	return 1;
 }
 
-#define NOKEYTIME 3 // seconds to end setup
+#define NOKEYTIME 2 // seconds to end setup
 
 typedef enum uiState
 {
