@@ -208,7 +208,7 @@ void testTask(void *pvParameter) {
 			case STATUS_DECHARGING:
 		//		ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1, -testChannel[n].averagedCurrent, testChannel[n].voltage);
 				sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent, testChannel[n].voltage);
-				testChannel[n].inCharge += -testChannel[n].averagedCurrent; // in mAs
+				testChannel[n].outCharge += -testChannel[n].averagedCurrent; // in mAs
 				testChannel[n].samples++;
 
 				if ((testChannel[n].voltage < DECHARDEDVOLATAGE) || (testChannel[n].voltage > NOBATVOLTAGE)) // removed
