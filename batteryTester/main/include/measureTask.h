@@ -57,7 +57,7 @@ extern QueueHandle_t LCDsemphr;
 #define NOBATVOLTAGE 4.0
 #define ERRORVOLTAGE 0.6
 #define NOCURRENT 2       // mA
-#define CHARGEDDROP 0.015 // V full charged
+#define CHARGEDDROP 0.008 // V full charged
 
 void testTask(void *pvParameter);
 void currentRegulatorTask(void *pvParameter);

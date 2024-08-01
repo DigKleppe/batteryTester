@@ -116,7 +116,7 @@ void guiTask(void *pvParameter)
 						testChannel[n].deChargeCurrent = stdCapacity[selCapIdx] / 5;
 						testChannel[n].chargeCurrent = stdCapacity[selCapIdx] / 5;
 						testChannel[n].setCurrent = testChannel[n].chargeCurrent;
-						testChannel[n].status = STATUS_CHARGING; //
+						testChannel[n].status = STATUS_CHARGING_MEAS1; //
 						state = uiStateWAIT;
 						xSemaphoreGiveRecursive(LCDsemphr);
 					}
