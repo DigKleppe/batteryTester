@@ -18,14 +18,15 @@
 
 
 #define MAX_STRLEN				 32
-#define USERSETTINGS_CHECKSTR 	"test-2"
-
+#define USERSETTINGS_CHECKSTR 	 "test-3"
+//const char* USERSETTINGS_CHECKSTR = {"test-3"};
 
 typedef struct {
 	float currentOffset[NR_CHANNELS];
 	float currentGain[NR_CHANNELS];
 	float voltageOffset[NR_CHANNELS];
 	float voltageGain[NR_CHANNELS];
+	function_t function;
 	char moduleName[MAX_STRLEN+1];
 	char checkstr[MAX_STRLEN+1];
 }userSettings_t;
@@ -39,19 +40,8 @@ typedef struct {
 	int maxValue;
 } settingsDescr_t;
 
-
-
-/*typedef struct {
-	varType_t varType;
-	int size;
-	void * pValue;
-	int minValue;
-	int maxValue;
-} settingsDescr_t;
-
-extern settingsDescr_t settingsDescr[];
-*/
 extern bool settingsChanged;
+extern userSettings_t userSettings;
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,11 +52,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-extern userSettings_t userSettings;
-
-
-
-
 
 #endif /* SETTINGS_H_ */

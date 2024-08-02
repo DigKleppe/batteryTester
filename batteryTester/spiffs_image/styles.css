@@ -77,6 +77,14 @@ input[type=checkbox]
   margin-bottom: 30px;
 }
 
+input[type=radio]
+{
+height: 20px;		
+  width: 90px;
+  margin-bottom: 50px;
+}
+
+
 /* Might want to wrap a span around your checkbox text */
 .checkboxtext
 {

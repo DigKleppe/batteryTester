@@ -22,6 +22,8 @@ var MAXPOINTS = LOGDAYS * 24 * 60 * 60
 var dayNames = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
 var displayNames = ["", "1", "2", "3", "4"];
 var cbIDs = ["", "T1cb", "T2cb", "T3cb", "T4cb"];
+
+
 var chartSeries = [-1, -1, -1, -1, -1];
 
 var NRItems = displayNames.length;
@@ -46,13 +48,6 @@ var chartOptions = {
 	vAxes: {
 		0: { logScale: false },
 	},
-	/*	series: {
-			0: { targetAxisIndex: 0 },// T1
-			1: { targetAxisIndex: 0 },// T2
-			2: { targetAxisIndex: 0 },// T3
-			3: { targetAxisIndex: 0 },// T4
-			4: { targetAxisIndex: 0 },// Tref
-		},*/
 };
 
 function clear() {
@@ -125,6 +120,7 @@ function loadCBs() {
 
 function initChart() {
 	window.addEventListener('load', loadCBs());
+
 }
 
 function initTimer() {
@@ -132,7 +128,7 @@ function initTimer() {
 	chart = new google.visualization.LineChart(document.getElementById('chart'));
 	data = new google.visualization.DataTable();
 	data.addColumn('string', 'Time');
-	
+
 	for (var m = 1; m < NRItems; m++) { // time not used for now 
 		var cb = document.getElementById(cbIDs[m]);
 		if (cb) {
@@ -143,13 +139,13 @@ function initTimer() {
 			}
 		}
 	}
-	if (activeSeries == 1 ) { // then none selected, select first
+	if (activeSeries == 1) { // then none selected, select first
 		var cb = document.getElementById(cbIDs[1]);
 		data.addColumn('number', displayNames[1]);
 		chartSeries[1] = 1;
 		cb.checked = true;
 	}
-	
+
 	chartRdy = true;
 	if (SIMULATE) {
 		simplot();
@@ -260,11 +256,12 @@ function timer() {
 	presc--
 	if (SIMULATE) {
 		simplot();
+
 	}
 	else {
 		if (presc == 0) {
 			presc = REQINTERVAL;
-			str = getItem ("getRTMeasValues");
+			str = getItem("getRTMeasValues");
 			arr = str.split(",");
 			// print RT values xx
 			if (arr.length >= NRItems) {
@@ -272,9 +269,9 @@ function timer() {
 					if (arr[0] != lastTimeStamp) {
 						lastTimeStamp = arr[0];
 						for (var m = 1; m < NRItems; m++) { // time not used for now 
-//							var value = parseFloat(arr[m]); // from string to float
-//							if (value < -100)
-//								arr[m] = "--";
+							//							var value = parseFloat(arr[m]); // from string to float
+							//							if (value < -100)
+							//								arr[m] = "--";
 							if (chartSeries[m] != -1)
 								plot(chartSeries[m], arr[m]);
 						}
@@ -284,21 +281,33 @@ function timer() {
 				}
 			}
 			if (firstRequest) {
-				arr =getItem("getLogMeasValues");
+				arr = getItem("getLogMeasValues");
 				plotArray(arr);
 				firstRequest = false;
+
+				arr = getItem("getFunction");  // set function RB
+
+				var rb = document.getElementsByClassName('rw-rb-state');
+				for (var i = 0; i < rb.length; i++) {
+					if (arr == rb[i].value)
+						rb[i].checked = true;
+				}
+
 			}
-			
 			chargeInfoTbl = document.getElementById("chargeInfoTable");
-			str = getItem ("getChargeValues");
+			str = getItem("getChargeValues");
 			arr = str.split(";");
-			for (var rows = 0; rows < arr.length ; rows++) {
-				arr2 = arr[rows].split(","); 
-				for (var m = 0; m < 4; m++) 
-					chargeInfoTbl.rows[rows+2].cells[m+1].innerHTML = arr2[m];
+			for (var rows = 0; rows < arr.length; rows++) {
+				arr2 = arr[rows].split(",");
+				for (var m = 0; m < 4; m++)
+					chargeInfoTbl.rows[rows + 2].cells[m + 1].innerHTML = arr2[m];
 			}
 		}
 	}
+}
+
+function functionRbClick( val){
+	sendItem( "SetFunction="+ val );
 }
 
 

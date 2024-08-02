@@ -19,13 +19,14 @@ bool settingsChanged;
 
 char checkstr[MAX_STRLEN+1];
 
-const userSettings_t userSettingsDefaults = {
+userSettings_t userSettingsDefaults = {
 	{0,0,0,0},  		
-	{1,1,1,1 },
+	{1,1.18,1,1 },
 	{0,0,0,0},
 	{1,1,1,1 },
-	{CONFIG_MDNS_HOSTNAME },
-	USERSETTINGS_CHECKSTR 
+	FUNCTION_TESTING,
+	{ CONFIG_MDNS_HOSTNAME },
+	{ USERSETTINGS_CHECKSTR }
 };
 
 userSettings_t userSettings;

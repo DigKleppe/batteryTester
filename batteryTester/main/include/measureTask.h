@@ -26,10 +26,20 @@ typedef enum {
  // STATUS_TESTED,
   STATUS_WAIT2,
   STATUS_CHARGED,
+  STATUS_DECHARGED,
   STATUS_INA_ERROR,
   STATUS_TESTMODE,
   STATUS_CALIBRATION
 } testChannelStatus;
+
+
+typedef enum {
+	FUNCTION_TESTING,
+	FUNCTION_CHARGING,
+	FUNCTION_DECHARGING
+} function_t;
+
+extern function_t function;
 
 typedef struct {
   testChannelStatus status;
