@@ -23,7 +23,7 @@ typedef enum {
   STATUS_CHARGING_MEAS2,
   STATUS_WAIT1,
   STATUS_DECHARGING,
-  STATUS_TESTED,
+ // STATUS_TESTED,
   STATUS_WAIT2,
   STATUS_CHARGED,
   STATUS_INA_ERROR,
@@ -46,6 +46,9 @@ typedef struct {
   int samples;
   float voltage;
   float maxVoltage;
+  int fullDebounces;
+  int noBatDebounces;
+  bool isTested;
 } testChannel_t;
 
 extern testChannel_t testChannel[NR_CHANNELS];

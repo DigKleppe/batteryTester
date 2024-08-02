@@ -619,11 +619,6 @@
 			<location>/home/dig/programmas/ESP32/esp-idf-v5.1.4/components/hal/usb_hal.c</location>
 		</link>
 		<link>
-			<name>build/ide/esp_idf_components/hal/usb_phy_hal.c</name>
-			<type>1</type>
-			<location>/home/dig/ESP32/idf5/esp-idf-v5.1.3/components/hal/usb_phy_hal.c</location>
-		</link>
-		<link>
 			<name>build/ide/esp_idf_components/hal/xt_wdt_hal.c</name>
 			<type>1</type>
 			<location>/home/dig/programmas/ESP32/esp-idf-v5.1.4/components/hal/xt_wdt_hal.c</location>
@@ -1922,11 +1917,6 @@
 			<name>build/ide/esp_idf_components/espcoredump/src/core_dump_binary.c</name>
 			<type>1</type>
 			<location>/home/dig/programmas/ESP32/esp-idf-v5.1.4/components/espcoredump/src/core_dump_binary.c</location>
-		</link>
-		<link>
-			<name>build/ide/esp_idf_components/espcoredump/src/core_dump_checksum.c</name>
-			<type>1</type>
-			<location>/home/dig/ESP32/idf5/esp-idf-v5.1.3/components/espcoredump/src/core_dump_checksum.c</location>
 		</link>
 		<link>
 			<name>build/ide/esp_idf_components/espcoredump/src/core_dump_common.c</name>
@@ -3569,11 +3559,6 @@
 			<location>/home/dig/programmas/ESP32/esp-idf-v5.1.4/components/wpa_supplicant/esp_supplicant/src/esp_owe.c</location>
 		</link>
 		<link>
-			<name>build/ide/esp_idf_components/wpa_supplicant/esp_supplicant/src/esp_scan.c</name>
-			<type>1</type>
-			<location>/home/dig/ESP32/idf5/esp-idf-v5.1.3/components/wpa_supplicant/esp_supplicant/src/esp_scan.c</location>
-		</link>
-		<link>
 			<name>build/ide/esp_idf_components/wpa_supplicant/esp_supplicant/src/esp_wpa2_api_port.c</name>
 			<type>1</type>
 			<location>/home/dig/programmas/ESP32/esp-idf-v5.1.4/components/wpa_supplicant/esp_supplicant/src/esp_wpa2_api_port.c</location>
@@ -3639,11 +3624,6 @@
 			<location>/home/dig/programmas/ESP32/esp-idf-v5.1.4/components/wpa_supplicant/src/ap/wpa_auth_ie.c</location>
 		</link>
 		<link>
-			<name>build/ide/esp_idf_components/wpa_supplicant/src/common/bss.c</name>
-			<type>1</type>
-			<location>/home/dig/ESP32/idf5/esp-idf-v5.1.3/components/wpa_supplicant/src/common/bss.c</location>
-		</link>
-		<link>
 			<name>build/ide/esp_idf_components/wpa_supplicant/src/common/dragonfly.c</name>
 			<type>1</type>
 			<location>/home/dig/programmas/ESP32/esp-idf-v5.1.4/components/wpa_supplicant/src/common/dragonfly.c</location>
@@ -3662,11 +3642,6 @@
 			<name>build/ide/esp_idf_components/wpa_supplicant/src/common/sae_pk.c</name>
 			<type>1</type>
 			<location>/home/dig/programmas/ESP32/esp-idf-v5.1.4/components/wpa_supplicant/src/common/sae_pk.c</location>
-		</link>
-		<link>
-			<name>build/ide/esp_idf_components/wpa_supplicant/src/common/scan.c</name>
-			<type>1</type>
-			<location>/home/dig/ESP32/idf5/esp-idf-v5.1.3/components/wpa_supplicant/src/common/scan.c</location>
 		</link>
 		<link>
 			<name>build/ide/esp_idf_components/wpa_supplicant/src/common/wpa_common.c</name>
