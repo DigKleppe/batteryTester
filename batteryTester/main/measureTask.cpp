@@ -43,7 +43,7 @@ extern bool currentRegulatorStarted;
 
 bool noBat(int idx) {
 	if (testChannel[idx].voltage > NOBATVOLTAGE) {
-		if (testChannel[idx].noBatDebounces > NOBATDEBOUNCES) {
+		if (testChannel[idx].noBatDebounces >= NOBATDEBOUNCES) {
 			return true;
 		}
 		testChannel[idx].noBatDebounces++;
@@ -58,7 +58,7 @@ bool isFull(int idx) {
 
 	if (testChannel[idx].voltage > MAXCHARGEDVOLATGE) // or bad contact
 	{
-		if (testChannel[idx].fullDebounces > FULLBATDEBOUNCES) {
+		if (testChannel[idx].fullDebounces >= FULLBATDEBOUNCES) {
 			ESP_LOGE(TAG, "%d full voltage max voltage exeeded", idx+1);
 			testChannel[idx].fullDebounces = 0;
 		} else
@@ -75,7 +75,7 @@ bool isFull(int idx) {
 	}
 	if (testChannel[idx].maxVoltage < testChannel[idx].voltage)
 		testChannel[idx].maxVoltage = testChannel[idx].voltage;
-	ESP_LOGI(TAG, "%d Vmax: %4.3f V", idx+1, testChannel[idx].maxVoltage);
+	ESP_LOGI(TAG, "%d Vbat: %4.3f Vmax: %4.3f V", idx+1, testChannel[idx].voltage, testChannel[idx].maxVoltage);
 	return false;
 }
 
@@ -101,6 +101,7 @@ void testTask(void *pvParameter) {
 		}
 		testChannel[n].chargeCurrent = 400;
 		testChannel[n].deChargeCurrent = 400;
+		testChannel[n].noBatDebounces = NOBATDEBOUNCES;
 	}
 
 	xLastWakeTime = xTaskGetTickCount();
@@ -186,7 +187,7 @@ void testTask(void *pvParameter) {
 				if (measTimer[n]-- == 0) {
 					measTimer[n] = MEASINTERVAL;
 					testChannel[n].voltage = avgm[n]->average() / 1000.0;
-					ESP_LOGI(TAG, "%d Vmeas %4.3f", n + 1, testChannel[n].voltage);
+				//	ESP_LOGI(TAG, "%d Vmeas %4.3f", n + 1, testChannel[n].voltage);
 					if (isFull(n)) {
 						if ( testChannel[n].isTested) { // recharging after test
 							testChannel[n].status = STATUS_CHARGED;
