@@ -18,8 +18,7 @@
 
 
 #define MAX_STRLEN				 32
-#define USERSETTINGS_CHECKSTR 	 "test-3"
-//const char* USERSETTINGS_CHECKSTR = {"test-3"};
+#define USERSETTINGS_CHECKSTR 	 "test-4"
 
 typedef struct {
 	float currentOffset[NR_CHANNELS];

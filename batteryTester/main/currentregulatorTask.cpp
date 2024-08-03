@@ -30,8 +30,6 @@ static const char *TAG = "cr";
 #define CHARGEPIN4 GPIO_NUM_37
 #define DECHARGEPIN4 GPIO_NUM_38
 
-
-
 const gpio_num_t chargePin[] = { CHARGEPIN1, CHARGEPIN2, CHARGEPIN3, CHARGEPIN4 };
 const gpio_num_t deChargePin[] = { DECHARGEPIN1, DECHARGEPIN2, DECHARGEPIN3, DECHARGEPIN4 };
 
@@ -97,7 +95,7 @@ currentRegulatorTask (void *pvParameter)
           if (testChannel[n].status != STATUS_INA_ERROR)
             {
 
-              vavg[n]->write (ina[n]->getBusVoltage () * 1000.0);
+              vavg[n]->write (ina[n]->getBusVoltage () * userSettings.voltageGain[n] * 1000.0);
 
               testChannel[n].voltage = vavg[n]->average () / 1000.0;
 

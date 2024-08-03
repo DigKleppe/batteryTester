@@ -23,7 +23,7 @@ userSettings_t userSettingsDefaults = {
 	{0,0,0,0},  		
 	{1,1.18,1,1 },
 	{0,0,0,0},
-	{1,1,1,1 },
+	{1,(3.0/3.151),1,1 }, // todo replace ina2!
 	FUNCTION_TESTING,
 	{ CONFIG_MDNS_HOSTNAME },
 	{ USERSETTINGS_CHECKSTR }
