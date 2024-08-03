@@ -6,9 +6,11 @@
  */
 #include "wifiConnect.h"
 #include "settings.h"
+#include "driver/gpio.h"
+#include "esp_log.h"
 #include "nvs_flash.h"
 #include "nvs.h"
-#include "driver/gpio.h"
+
 #include <string.h>
 
 #define STORAGE_NAMESPACE "storage"
@@ -31,66 +33,10 @@ userSettings_t userSettingsDefaults = {
 
 userSettings_t userSettings;
 
-//esp_err_t saveUserSettings(void)
-//{
-//	FILE *fd = fopen("/spiffs/settings", "wb");
-//	if (fd == NULL) {
-//		printf("  Error opening file (%d) %s\n", errno, strerror(errno));
-//		printf("\n");
-//		return-1;
-//	}
-//	int len = sizeof (userSettings_t);
-//	int res = fwrite( &userSettings, 1, len, fd);
-//	if (res != len) {
-//		printf("  Error writing to file(%d <> %d\n", res, len);
-//		res = fclose(fd);
-//		return -1;
-//	}
-//	res = fclose(fd);
-//	return 0;
-//}
-//
-//esp_err_t loadUserSettings(){
-//	esp_err_t res = 0;
-//	FILE *fd = fopen("/spiffs/settings", "rb");
-//	if (fd == NULL) {
-//		printf("  Error opening settings file (%d) %s\n", errno, strerror(errno));
-//
-//	}
-//	else {
-//		int len = sizeof (userSettings_t);
-//		res = fread( &userSettings, 1, len, fd);
-//		if (res <= 0) {
-//			printf("  Error reading from file\n");
-//		}
-//		res = fclose(fd);
-//	}
-//	if (strcmp(userSettings.checkstr, CHECKSTR) != 0 ){
-//		userSettings = userSettingsDefaults;
-//		printf( " ** defaults loaded");
-//		saveUserSettings();
-//	}
-//	return res;
-//}
-
-/*
- * settings.c
- *
- *  Created on: Nov 30, 2017
- *      Author: dig
- */
-#include "esp_log.h"
-#include "settings.h"
-#include "nvs_flash.h"
-#include "nvs.h"
-#include "wifiConnect.h"
-#include <string.h>
 
 #define STORAGE_NAMESPACE "storage"
-
 static const char *TAG = "Settings";
 
-//bool settingsChanged;
 extern "C" {
 
 esp_err_t saveSettings(void) {
@@ -129,7 +75,6 @@ esp_err_t loadSettings() {
 	nvs_handle_t my_handle;
 	esp_err_t err = 0;
 	bool doSave = false;
-
 
 	err = nvs_open(STORAGE_NAMESPACE, NVS_READONLY, &my_handle);
 	size_t len;

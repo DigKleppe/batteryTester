@@ -12,8 +12,6 @@ uint32_t  timeStamp=1;
 int dayLogRxIdx;
 int dayLogTxIdx;
 
-//int logPrescaler = LOGINTERVAL;
-
 log_t accumulator;
 log_t dayLog[ MAXDAYLOGVALUES];
 
@@ -68,9 +66,7 @@ int getDayLogScript(char *pBuffer, int count) {
 			do {
 				len += sprintf(pBuffer + len, "%d,", (int) dayLog[dayLogRxIdx].timeStamp);
 				for ( n = 0 ; n < NR_CHANNELS; n++)
-					len += sprintf(pBuffer + len, "%3.2f,", dayLog[dayLogRxIdx].voltage[n]- userSettings.voltageOffset[n]);
-
-			//	len += sprintf(pBuffer + len, "%3.3f\n", dayLog[dayLogRxIdx].refTemperature);
+					len += sprintf(pBuffer + len, "%1.4f,", dayLog[dayLogRxIdx].voltage[n]- userSettings.voltageOffset[n]);
 
 				len += sprintf(pBuffer + len, "\n");
 				dayLogRxIdx++;
@@ -83,5 +79,11 @@ int getDayLogScript(char *pBuffer, int count) {
 		}
 	}
 	return len;
+}
+
+void clearLog( void ){
+	dayLogTxIdx = 0;
+	dayLogRxIdx = 0;
+	dayLog[dayLogRxIdx].timeStamp = 0;
 }
 

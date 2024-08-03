@@ -36,7 +36,8 @@ typedef enum {
 typedef enum {
 	FUNCTION_TESTING,
 	FUNCTION_CHARGING,
-	FUNCTION_DECHARGING
+	FUNCTION_DECHARGING,
+	NR_FUNCTIONS
 } function_t;
 
 extern function_t function;

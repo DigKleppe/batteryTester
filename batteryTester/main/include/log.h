@@ -13,7 +13,7 @@
 #include "measureTask.h"
 
 #define LOGINTERVAL 				1
-#define MAXDAYLOGVALUES				((24*60)/LOGINTERVAL)
+#define MAXDAYLOGVALUES				((3*60*60)/LOGINTERVAL) // todo
 
 typedef struct {
 	int32_t timeStamp;
@@ -28,7 +28,7 @@ extern log_t dayLog[ MAXDAYLOGVALUES];
 
 int getDayLogScript(char *pBuffer, int count);
 void addToLog( log_t logValue);
-
+void clearLog( void );
 
 
 #endif /* MAIN_INCLUDE_LOG_H_ */

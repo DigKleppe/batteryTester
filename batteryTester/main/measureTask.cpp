@@ -472,7 +472,7 @@ int getNewMeasValuesScript(char *pBuffer, int count) {
 		do {
 			len += sprintf(pBuffer + len, "%d,", static_cast<int>(dayLog[dayLogRxIdx].timeStamp));
 			for (int n = 0; n < NR_CHANNELS; n++) {
-				len += sprintf(pBuffer + len, "%4.4f,", dayLog[dayLogRxIdx].voltage[n]);
+				len += sprintf(pBuffer + len, "%1.4f,", dayLog[dayLogRxIdx].voltage[n]);
 			}
 			len += sprintf(pBuffer + len, "\n");
 			dayLogRxIdx++;
@@ -490,6 +490,7 @@ calValues_t calValues;
 char tempName[MAX_STRLEN];
 int calCurrent;
 int stopCal;
+int dummy;
 
 const CGIdesc_t writeVarDescriptors[] = {
     { "Positie 1", &calValues.current[0], FLT, 1 },
@@ -499,9 +500,12 @@ const CGIdesc_t writeVarDescriptors[] = {
 	{ "moduleName",tempName, STR, 1 },
 	{ "setCurrent", &calCurrent, INT, 1 },
 	{ "stopCal", &stopCal, INT, 1 },
+	{ "clearLog", &dummy, INT, 1 },
+	{ "setFunction", tempName, INT, 1 },
 };
 
-#define NR_CALDESCRIPTORS (sizeof (writeVarDescriptors)/ sizeof (CGIdesc_t))
+#define NR_WRITEVARDESCRIPTORS (sizeof (writeVarDescriptors)/ sizeof (CGIdesc_t))
+
 // @formatter:on
 
 // parse items send by senditem (HTML post)
@@ -509,7 +513,7 @@ const CGIdesc_t writeVarDescriptors[] = {
 void parseCGIWriteData(char *buf, int received) {
 	int idx = -1;
 	if (strncmp(buf, "setCal:", 7) == 0) {  //
-		idx = readActionScript(&buf[7], writeVarDescriptors, NR_CALDESCRIPTORS);
+		idx = readActionScript(&buf[7], writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
 		if (idx >= 0) {
 			if (testChannel[idx].averagedCurrent != 0) {
 				float measuredCurrent = static_cast<float>(testChannel[idx].averagedCurrent) / userSettings.currentGain[idx];
@@ -520,7 +524,7 @@ void parseCGIWriteData(char *buf, int received) {
 	}
 	if (idx < 0) {
 		if (strncmp(buf, "setName:", 8) == 0) {
-			idx = readActionScript(&buf[8], writeVarDescriptors, NR_CALDESCRIPTORS);
+			idx = readActionScript(&buf[8], writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
 			if (idx >= 0) {
 				if (strcmp(tempName, userSettings.moduleName) != 0) {
 					strcpy(userSettings.moduleName, tempName);
@@ -533,7 +537,7 @@ void parseCGIWriteData(char *buf, int received) {
 	}
 
 	if (idx < 0) { // none of above
-		idx = readActionScript(buf, writeVarDescriptors, NR_CALDESCRIPTORS);
+		idx = readActionScript(buf, writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
 		switch (idx) {
 		case 5: // setCurrent -> switch to calibration mode
 			for (int n = 0; n < NR_CHANNELS; n++) {
@@ -545,6 +549,17 @@ void parseCGIWriteData(char *buf, int received) {
 			for (int n = 0; n < NR_CHANNELS; n++) {
 				testChannel[n].status = STATUS_NO_BAT;
 				testChannel[n].setCurrent = 0;
+			}
+			break;
+		case 7: // clearLog
+			clearLog();
+			break;
+		case 8: // setFunction
+			for ( int n = 0; n < NR_FUNCTIONS; n++) {
+				if (strcmp ( functionText[n] , tempName) == 0) {
+					userSettings.function =  (function_t) n;
+					saveSettings();
+				}
 			}
 			break;
 		default:

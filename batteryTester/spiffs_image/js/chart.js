@@ -15,7 +15,7 @@ var firstRequest = true;
 var plotTimer = 6; // every 60 seconds plot averaged value
 var rows = 0;
 
-var MINUTESPERTICK = 5;// log interval 
+var SECONDSPERTICK = 1;// log interval 
 var LOGDAYS = 1;
 var MAXPOINTS = LOGDAYS * 24 * 60 * 60
 
@@ -52,7 +52,7 @@ var chartOptions = {
 
 function clear() {
 	data.removeRows(0, data.getNumberOfRows());
-	chart.draw(data, options);
+	chart.draw(data, chartOptions);
 	tick = 0;
 }
 
@@ -165,15 +165,14 @@ function updateLastDayTimeLabel(data) {
 
 function updateAllDayTimeLabels(data) {
 	var rows = data.getNumberOfRows();
-	var minutesAgo = rows * MINUTESPERTICK;
+	var secondsAgo = rows * SECONDSPERTICK;
 	var ms = Date.now();
-	ms -= (minutesAgo * 60 * 1000);
+	ms -= (secondsAgo * 1000);
 	for (var n = 0; n < rows; n++) {
 		var date = new Date(ms);
 		var labelText = dayNames[date.getDay()] + ';' + date.getHours() + ':' + date.getMinutes();
 		data.setValue(n, 0, labelText);
-		ms += 60 * 1000 * MINUTESPERTICK;
-
+		ms += 1000 * SECONDSPERTICK;
 	}
 }
 
@@ -310,6 +309,21 @@ function functionRbClick( val){
 	sendItem( "SetFunction="+ val );
 }
 
+function startStop() {
+	halt = !halt;
+	if (halt)
+		document.getElementById('startStopButton').innerHTML = 'start';
+	else
+		document.getElementById('startStopButton').innerHTML = 'stop';
+}
 
+function clearLog() {
+	sendItem("clearLog=1");
+	clear();
+}
+
+function clearChart() {
+	clear();
+}
 
 
