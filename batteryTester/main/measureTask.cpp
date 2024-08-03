@@ -211,7 +211,7 @@ void testTask(void *pvParameter) {
 				avgm[n]->write(testChannel[n].voltage * 1000.0);
 				if (measTimer[n]-- == 0) {
 					measTimer[n] = MEASINTERVAL;
-					testChannel[n].voltage = avgm[n]->average() / 1000.0;
+					testChannel[n].voltage =  avgm[n]->getLowest() /1000.0; //    avgm[n]->average() / 1000.0;
 					//	ESP_LOGI(TAG, "%d Vmeas %4.3f", n + 1, testChannel[n].voltage);
 					if (isFull(n)) {
 						if (testChannel[n].isTested) { // recharging after test
@@ -302,7 +302,7 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_DECHARGED:
-				sprintf(LCDline + len, "%4.3fV Ontladen", testChannel[n].voltage);
+				sprintf(LCDline + len, "%1.2fV Ontladen", testChannel[n].voltage);
 				if (noBat(n))
 					testChannel[n].status = STATUS_NO_BAT;
 				break;
