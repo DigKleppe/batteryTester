@@ -35,8 +35,8 @@ Averager avgm4(MEASTIME);
 
 Averager *avgm[] = { &avgm1, &avgm2, &avgm3, &avgm4 };
 
-static const char *statusText[] = { { "Geen batterij" }, { "Instellen" }, { "Laden" }, { "Meten" }, { "Meten" }, { "-" }, { "Ontladen" }, { "-" },
-		{ "Getest, geladen" },{"Ontladen"},{"Testmode" }, { "Calibratie" }, { "Fout" } };
+static const char *statusText[] = { { "Geen batterij" }, { "Instellen" }, { "Laden" }, { "Meten" }, { "Meten" }, { "-" }, { "Ontladen" }, { "-" }, { "Getest, geladen" }, {
+		"Ontladen" }, { "Testmode" }, { "Calibratie" }, { "Fout" } };
 
 static const char *functionText[] = { { "Testen" }, { "Laden" }, { "Ontladen" } };
 
@@ -95,6 +95,21 @@ void testTask(void *pvParameter) {
 	while (!currentRegulatorStarted)
 		vTaskDelay(100);
 
+	/*			case STATUS_TESTED:
+	 // recharge after testing
+	 //	ESP_LOGI(TAG, "%d tested charging %d mA %4.3f V %d mAH", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage, testChannel[n].measuredCapacity);
+	 sprintf(LCDline + len, "T*%4dmAh* %4.3fV", testChannel[n].measuredCapacity, testChannel[n].voltage);
+
+	 testChannel[n].inCharge += testChannel[n].averagedCurrent; // in mAs
+	 if (noBat(n))
+	 testChannel[n].status = STATUS_NO_BAT;
+	 else {
+	 if (isFull(n)) {
+	 testChannel[n].status = STATUS_CHARGED;
+	 testChannel[n].setCurrent = 10; // trickle
+	 }
+	 }
+	 break;*/
 	for (int n = 0; n < NR_CHANNELS; n++) {
 		if (testChannel[n].status == STATUS_INA_ERROR) {
 			ESP_LOGE(TAG, "ina %d+1 error", n);
@@ -155,8 +170,7 @@ void testTask(void *pvParameter) {
 				if (userSettings.function == FUNCTION_DECHARGING) {
 					testChannel[n].status = STATUS_WAIT1;
 					testChannel[n].setCurrent = 0;
-				}
-				else {
+				} else {
 					if (testChannel[n].isTested) // recharging
 						sprintf(LCDline + len, "T*%4dmAh* %4.3fV", testChannel[n].measuredCapacity, testChannel[n].voltage);
 					else
@@ -222,8 +236,7 @@ void testTask(void *pvParameter) {
 					testChannel[n].samples = 0;
 					if (userSettings.function == FUNCTION_CHARGING) {
 						testChannel[n].status = STATUS_CHARGED;
-					}
-					else {
+					} else {
 						testChannel[n].setCurrent = -testChannel[n].deChargeCurrent;
 						testChannel[n].status = STATUS_DECHARGING;
 					}
@@ -231,21 +244,25 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_DECHARGING:
-				//		ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1, -testChannel[n].averagedCurrent, testChannel[n].voltage);
-				sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent, testChannel[n].voltage);
-				testChannel[n].outCharge += -testChannel[n].averagedCurrent; // in mAs
-				testChannel[n].samples++;
-				if (noBat(n))
-					testChannel[n].status = STATUS_NO_BAT;
-				else {
-					if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
-						testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
-						testChannel[n].setCurrent = 0;
-						if (userSettings.function == FUNCTION_DECHARGING) {
-							testChannel[n].status = STATUS_DECHARGED;
+				if (userSettings.function == FUNCTION_CHARGING) {
+					testChannel[n].status = STATUS_SETUP;
+					testChannel[n].setCurrent = 0;
+				} else {
+					//		ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1, -testChannel[n].averagedCurrent, testChannel[n].voltage);
+					sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent, testChannel[n].voltage);
+					testChannel[n].outCharge += -testChannel[n].averagedCurrent; // in mAs
+					testChannel[n].samples++;
+					if (noBat(n))
+						testChannel[n].status = STATUS_NO_BAT;
+					else {
+						if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
+							testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
+							testChannel[n].setCurrent = 0;
+							if (userSettings.function == FUNCTION_DECHARGING) {
+								testChannel[n].status = STATUS_DECHARGED;
+							} else
+								testChannel[n].status = STATUS_WAIT2;
 						}
-						else
-							testChannel[n].status = STATUS_WAIT2;
 					}
 				}
 				break;
@@ -264,22 +281,6 @@ void testTask(void *pvParameter) {
 					testChannel[n].noBatDebounces = 0;
 				}
 				break;
-
-				/*			case STATUS_TESTED:
-				 // recharge after testing
-				 //	ESP_LOGI(TAG, "%d tested charging %d mA %4.3f V %d mAH", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage, testChannel[n].measuredCapacity);
-				 sprintf(LCDline + len, "T*%4dmAh* %4.3fV", testChannel[n].measuredCapacity, testChannel[n].voltage);
-
-				 testChannel[n].inCharge += testChannel[n].averagedCurrent; // in mAs
-				 if (noBat(n))
-				 testChannel[n].status = STATUS_NO_BAT;
-				 else {
-				 if (isFull(n)) {
-				 testChannel[n].status = STATUS_CHARGED;
-				 testChannel[n].setCurrent = 10; // trickle
-				 }
-				 }
-				 break;*/
 
 			case STATUS_CHARGED:
 				//		ESP_LOGI(TAG, "%d ready %4d mA %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage);
@@ -405,7 +406,10 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 		scriptState++;
 		len = sprintf(pBuffer + len, "%d,", static_cast<int>(timeStamp++));
 		for (int n = 0; n < NR_CHANNELS; n++) {
-			len += sprintf(pBuffer + len, "%4.4f,", testChannel[n].voltage);
+			if (testChannel[n].voltage > NOBATVOLTAGE)
+				len += sprintf(pBuffer + len, "2.0");	// limit for chart
+			else
+				len += sprintf(pBuffer + len, "%4.4f,", testChannel[n].voltage);
 		}
 		len += sprintf(pBuffer + len, "\n");
 
@@ -501,7 +505,7 @@ const CGIdesc_t writeVarDescriptors[] = {
 	{ "setCurrent", &calCurrent, INT, 1 },
 	{ "stopCal", &stopCal, INT, 1 },
 	{ "clearLog", &dummy, INT, 1 },
-	{ "setFunction", tempName, INT, 1 },
+	{ "setFunction", tempName, STR, 1 },
 };
 
 #define NR_WRITEVARDESCRIPTORS (sizeof (writeVarDescriptors)/ sizeof (CGIdesc_t))
@@ -555,9 +559,9 @@ void parseCGIWriteData(char *buf, int received) {
 			clearLog();
 			break;
 		case 8: // setFunction
-			for ( int n = 0; n < NR_FUNCTIONS; n++) {
-				if (strcmp ( functionText[n] , tempName) == 0) {
-					userSettings.function =  (function_t) n;
+			for (int n = 0; n < NR_FUNCTIONS; n++) {
+				if (strcmp(functionText[n], tempName) == 0) {
+					userSettings.function = (function_t) n;
 					saveSettings();
 				}
 			}

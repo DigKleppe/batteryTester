@@ -306,7 +306,7 @@ function timer() {
 }
 
 function functionRbClick( val){
-	sendItem( "SetFunction="+ val );
+	sendItem( "setFunction="+ val );
 }
 
 function startStop() {
