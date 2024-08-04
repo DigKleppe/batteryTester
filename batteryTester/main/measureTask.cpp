@@ -35,6 +35,8 @@ Averager avgm4(MEASTIME);
 
 Averager *avgm[] = { &avgm1, &avgm2, &avgm3, &avgm4 };
 
+function_t function;
+
 static const char *statusText[] = { { "Geen batterij" }, { "Instellen" }, { "Laden" }, { "Meten" }, { "Meten" }, { "-" }, { "Ontladen" }, { "-" }, { "Getest, geladen" }, {
 		"Ontladen" }, { "Testmode" }, { "Calibratie" }, { "Fout" } };
 
@@ -91,33 +93,17 @@ void testTask(void *pvParameter) {
 	bool displayToggle[NR_CHANNELS];
 	int measTimer[NR_CHANNELS];
 	log_t log;
+	int logTimer = 0;
 
 	while (!currentRegulatorStarted)
 		vTaskDelay(100);
 
-	/*			case STATUS_TESTED:
-	 // recharge after testing
-	 //	ESP_LOGI(TAG, "%d tested charging %d mA %4.3f V %d mAH", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage, testChannel[n].measuredCapacity);
-	 sprintf(LCDline + len, "T*%4dmAh* %4.3fV", testChannel[n].measuredCapacity, testChannel[n].voltage);
-
-	 testChannel[n].inCharge += testChannel[n].averagedCurrent; // in mAs
-	 if (noBat(n))
-	 testChannel[n].status = STATUS_NO_BAT;
-	 else {
-	 if (isFull(n)) {
-	 testChannel[n].status = STATUS_CHARGED;
-	 testChannel[n].setCurrent = 10; // trickle
-	 }
-	 }
-	 break;*/
 	for (int n = 0; n < NR_CHANNELS; n++) {
 		if (testChannel[n].status == STATUS_INA_ERROR) {
 			ESP_LOGE(TAG, "ina %d+1 error", n);
 		} else {
 			ESP_LOGI(TAG, "ina %d+1 initialized", n);
 		}
-		testChannel[n].chargeCurrent = 400;
-		testChannel[n].deChargeCurrent = 400;
 		testChannel[n].noBatDebounces = NOBATDEBOUNCES;
 	}
 
@@ -125,12 +111,6 @@ void testTask(void *pvParameter) {
 	while (1) {
 		memset(LCDline, 0, LCD_COLS + 1); // clr buffer
 		for (int n = 0; n < NR_CHANNELS; n++) {
-
-			if (testChannel[n].voltage > NOBATVOLTAGE)
-				log.voltage[n] = 2.0; // limit for chart
-			else
-				log.voltage[n] = testChannel[n].voltage;
-
 			len = sprintf(LCDline, "%d ", n + 1);
 			switch (testChannel[n].status) {
 			case STATUS_INA_ERROR:
@@ -154,20 +134,23 @@ void testTask(void *pvParameter) {
 						testChannel[n].status = STATUS_SETUP;
 						testChannel[n].noBatDebounces = 0;
 						testChannel[n].isTested = false;
+
 						displayTimer[n] = 10;
 						displayToggle[n] = true;
 						measTimer[n] = 1;
 					}
 				}
+				log.voltage[n] = 2.0; // limit for chart
 				break;
 
 			case STATUS_SETUP:
+				log.voltage[n] = testChannel[n].voltage;
 				// handled in main
 				break;
 
 			case STATUS_CHARGING:
 				//	ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
-				if (userSettings.function == FUNCTION_DECHARGING) {
+				if (function == FUNCTION_DECHARGING) {
 					testChannel[n].status = STATUS_WAIT1;
 					testChannel[n].setCurrent = 0;
 				} else {
@@ -206,12 +189,13 @@ void testTask(void *pvParameter) {
 
 			case STATUS_CHARGING_MEAS2:
 				//	ESP_LOGI(TAG, "%d charging meas 2%3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
-				sprintf(LCDline + len, "Meten..   %4.3fV", testChannel[n].voltage);
-
+				sprintf(LCDline + len, "Meten.. %4.3fV", testChannel[n].voltage);
 				avgm[n]->write(testChannel[n].voltage * 1000.0);
 				if (measTimer[n]-- == 0) {
 					measTimer[n] = MEASINTERVAL;
-					testChannel[n].voltage =  avgm[n]->getLowest() /1000.0; //    avgm[n]->average() / 1000.0;
+					testChannel[n].voltage = avgm[n]->getLowest() / 1000.0; //    avgm[n]->average() / 1000.0;
+					log.voltage[n] = testChannel[n].voltage; // log decharging is currentless
+					addToLog(log);
 					//	ESP_LOGI(TAG, "%d Vmeas %4.3f", n + 1, testChannel[n].voltage);
 					if (isFull(n)) {
 						if (testChannel[n].isTested) { // recharging after test
@@ -234,7 +218,7 @@ void testTask(void *pvParameter) {
 				if (testChannel[n].current < NOCURRENT) {
 					testChannel[n].measuredCapacity = 0;
 					testChannel[n].samples = 0;
-					if (userSettings.function == FUNCTION_CHARGING) {
+					if (function == FUNCTION_CHARGING) {
 						testChannel[n].status = STATUS_CHARGED;
 					} else {
 						testChannel[n].setCurrent = -testChannel[n].deChargeCurrent;
@@ -244,11 +228,13 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_DECHARGING:
-				if (userSettings.function == FUNCTION_CHARGING) {
+				if (function == FUNCTION_CHARGING) {
 					testChannel[n].status = STATUS_SETUP;
 					testChannel[n].setCurrent = 0;
 				} else {
 					//		ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1, -testChannel[n].averagedCurrent, testChannel[n].voltage);
+					log.voltage[n] = testChannel[n].voltage;
+
 					sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent, testChannel[n].voltage);
 					testChannel[n].outCharge += -testChannel[n].averagedCurrent; // in mAs
 					testChannel[n].samples++;
@@ -258,7 +244,7 @@ void testTask(void *pvParameter) {
 						if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
 							testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
 							testChannel[n].setCurrent = 0;
-							if (userSettings.function == FUNCTION_DECHARGING) {
+							if (function == FUNCTION_DECHARGING) {
 								testChannel[n].status = STATUS_DECHARGED;
 							} else
 								testChannel[n].status = STATUS_WAIT2;
@@ -284,7 +270,9 @@ void testTask(void *pvParameter) {
 
 			case STATUS_CHARGED:
 				//		ESP_LOGI(TAG, "%d ready %4d mA %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage);
+				log.voltage[n] = testChannel[n].voltage;
 				displayTimer[n]--;
+
 				if (displayTimer[n] == 0) {
 					displayTimer[n] = 5;
 					displayToggle[n] = !displayToggle[n];
@@ -302,12 +290,14 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_DECHARGED:
+				log.voltage[n] = testChannel[n].voltage;
 				sprintf(LCDline + len, "%1.2fV Ontladen", testChannel[n].voltage);
 				if (noBat(n))
 					testChannel[n].status = STATUS_NO_BAT;
 				break;
 
 			case STATUS_TESTMODE:
+				log.voltage[n] = testChannel[n].voltage;
 				sprintf(LCDline + len, "Tm %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 				toggle = !toggle;
 				if (toggle)
@@ -317,6 +307,7 @@ void testTask(void *pvParameter) {
 				break;
 
 			case STATUS_CALIBRATION:
+				log.voltage[n] = testChannel[n].voltage;
 				sprintf(LCDline + len, "Cal %3dmA %4.3fV", testChannel[n].averagedCurrent, testChannel[n].voltage);
 				break;
 			}
@@ -331,162 +322,168 @@ void testTask(void *pvParameter) {
 				xSemaphoreGiveRecursive(LCDsemphr);
 			}
 		}
-		addToLog(log);
+		if (logTimer <= 0) {
+			addToLog(log);
+			logTimer = LOGINTERVAL;
+		} else {
+			logTimer--;
+		}
 		xTaskDelayUntil(&xLastWakeTime, 1000);
 	}
+}
 }
 
 // called from CGI
 
 int getSensorNameScript(char *pBuffer, int count) {
-	int len = 0;
-	switch (scriptState) {
-	case 0:
-		scriptState++;
-		len += sprintf(pBuffer + len, "Actueel,Nieuw\n");
-		len += sprintf(pBuffer + len, "%s\n", userSettings.moduleName);
-		break;
-	default:
-		break;
-	}
-	return (len);
+int len = 0;
+switch (scriptState) {
+case 0:
+	scriptState++;
+	len += sprintf(pBuffer + len, "Actueel,Nieuw\n");
+	len += sprintf(pBuffer + len, "%s\n", userSettings.moduleName);
+	break;
+default:
+	break;
+}
+return (len);
 }
 
 int getInfoValuesScript(char *pBuffer, int count) {
-	int len = 0;
-	char str[10];
-	switch (scriptState) {
-	case 0:
-		scriptState++;
-		len += sprintf(pBuffer + len, "%s\n", "Positie,Actueel,Offset,Gain");
-		for (int n = 0; n < NR_CHANNELS; n++) {
-			sprintf(str, "%d", n + 1);
-			len += sprintf(pBuffer + len, "%s spanning,%3.3f, -, -\n", str, testChannel[n].voltage); // no gain and offset needed for voltage
-			len += sprintf(pBuffer + len, "%s stroom ,%3.2f,%3.2f,%3.2f\n", str, testChannel[n].current - userSettings.currentOffset[n], userSettings.currentOffset[n],
-					userSettings.currentGain[n]);
-		}
-		break;
-	default:
-		break;
+int len = 0;
+char str[10];
+switch (scriptState) {
+case 0:
+	scriptState++;
+	len += sprintf(pBuffer + len, "%s\n", "Positie,Actueel,Offset,Gain");
+	for (int n = 0; n < NR_CHANNELS; n++) {
+		sprintf(str, "%d", n + 1);
+		len += sprintf(pBuffer + len, "%s spanning,%3.3f, -, -\n", str, testChannel[n].voltage); // no gain and offset needed for voltage
+		len += sprintf(pBuffer + len, "%s stroom ,%3.2f,%3.2f,%3.2f\n", str, testChannel[n].current - userSettings.currentOffset[n], userSettings.currentOffset[n],
+				userSettings.currentGain[n]);
 	}
-	return (len);
+	break;
+default:
+	break;
+}
+return (len);
 }
 
 // only build javascript table
 
 int getCalValuesScript(char *pBuffer, int count) {
-	int len = 0;
-	switch (scriptState) {
-	case 0:
-		scriptState++;
-		len += sprintf(pBuffer + len, "%s", "Positie,Referentie,Stel in,Herstel\n");
-		len += sprintf(pBuffer + len, "%s", "Positie 1\n Positie 2\n Positie 3\n Positie 4\n");
-		break;
-	default:
-		break;
-	}
-	return (len);
+int len = 0;
+switch (scriptState) {
+case 0:
+	scriptState++;
+	len += sprintf(pBuffer + len, "%s", "Positie,Referentie,Stel in,Herstel\n");
+	len += sprintf(pBuffer + len, "%s", "Positie 1\n Positie 2\n Positie 3\n Positie 4\n");
+	break;
+default:
+	break;
+}
+return (len);
 }
 
 int saveSettingsScript(char *pBuffer, int count) {
-	saveSettings();
-	return (0);
+saveSettings();
+return (0);
 }
 
 int cancelSettingsScript(char *pBuffer, int count) {
-	loadSettings();
-	return (0);
+loadSettings();
+return (0);
 }
 
 int getRTMeasValuesScript(char *pBuffer, int count) {
-	int len = 0;
+int len = 0;
 
-	switch (scriptState) {
-	case 0:
-		scriptState++;
-		len = sprintf(pBuffer + len, "%d,", static_cast<int>(timeStamp++));
-		for (int n = 0; n < NR_CHANNELS; n++) {
-			if (testChannel[n].voltage > NOBATVOLTAGE)
-				len += sprintf(pBuffer + len, "2.0");	// limit for chart
-			else
-				len += sprintf(pBuffer + len, "%4.4f,", testChannel[n].voltage);
-		}
-		len += sprintf(pBuffer + len, "\n");
-
-		break;
-	default:
-		break;
+switch (scriptState) {
+case 0:
+	scriptState++;
+	len = sprintf(pBuffer + len, "%d,", static_cast<int>(timeStamp++));
+	for (int n = 0; n < NR_CHANNELS; n++) {
+		if (testChannel[n].voltage > NOBATVOLTAGE)
+			len += sprintf(pBuffer + len, "2.0");	// limit for chart
+		else
+			len += sprintf(pBuffer + len, "%4.4f,", testChannel[n].voltage);
 	}
-	return (len);
+	len += sprintf(pBuffer + len, "\n");
+
+	break;
+default:
+	break;
+}
+return (len);
 }
 
 int getChargeValuesScript(char *pBuffer, int count) {
-	int len = 0;
+int len = 0;
 
-	switch (scriptState) {
-	case 0:
-		scriptState++;
-		for (int n = 0; n < NR_CHANNELS; n++) {
-			len += sprintf(pBuffer + len, "%s,", statusText[static_cast<int>(testChannel[n].status)]);
-		}
-		break;
-	case 1:
-		scriptState++;
-		for (int n = 0; n < NR_CHANNELS; n++) {
-			len += sprintf(pBuffer + len, "%4d,", testChannel[n].measuredCapacity);
-		}
-		break;
-	case 2:
-		scriptState++;
-		for (int n = 0; n < NR_CHANNELS; n++) {
-			len += sprintf(pBuffer + len, "%3.3f,", testChannel[n].voltage);
-		}
-		break;
-	case 3:
-		scriptState++;
-		for (int n = 0; n < NR_CHANNELS; n++) {
-			len += sprintf(pBuffer + len, "%4d,", testChannel[n].inCharge / 3600);
-		}
-		break;
-	case 4:
-		scriptState++;
-		for (int n = 0; n < NR_CHANNELS; n++) {
-			len += sprintf(pBuffer + len, "%4d,", testChannel[n].outCharge / 3600);
-		}
-		break;
-	case 5:
-		scriptState++;
-		break;
-
-	default:
-		break;
+switch (scriptState) {
+case 0:
+	scriptState++;
+	for (int n = 0; n < NR_CHANNELS; n++) {
+		len += sprintf(pBuffer + len, "%s,", statusText[static_cast<int>(testChannel[n].status)]);
 	}
+	break;
+case 1:
+	scriptState++;
+	for (int n = 0; n < NR_CHANNELS; n++) {
+		len += sprintf(pBuffer + len, "%4d,", testChannel[n].measuredCapacity);
+	}
+	break;
+case 2:
+	scriptState++;
+	for (int n = 0; n < NR_CHANNELS; n++) {
+		len += sprintf(pBuffer + len, "%3.3f,", testChannel[n].voltage);
+	}
+	break;
+case 3:
+	scriptState++;
+	for (int n = 0; n < NR_CHANNELS; n++) {
+		len += sprintf(pBuffer + len, "%4d,", testChannel[n].inCharge / 3600);
+	}
+	break;
+case 4:
+	scriptState++;
+	for (int n = 0; n < NR_CHANNELS; n++) {
+		len += sprintf(pBuffer + len, "%4d,", testChannel[n].outCharge / 3600);
+	}
+	break;
+case 5:
+	scriptState++;
+	break;
 
-	if (len > 0)
-		len += sprintf(pBuffer + len, ";");
-	return (len);
+default:
+	break;
+}
+
+if (len > 0)
+	len += sprintf(pBuffer + len, ";");
+return (len);
 }
 
 // these functions only work for one user!
 
 int getNewMeasValuesScript(char *pBuffer, int count) {
-	int left = 0;
-	int len = 0;
-	if (dayLogRxIdx != (dayLogTxIdx)) {  // something to send?
-		do {
-			len += sprintf(pBuffer + len, "%d,", static_cast<int>(dayLog[dayLogRxIdx].timeStamp));
-			for (int n = 0; n < NR_CHANNELS; n++) {
-				len += sprintf(pBuffer + len, "%1.4f,", dayLog[dayLogRxIdx].voltage[n]);
-			}
-			len += sprintf(pBuffer + len, "\n");
-			dayLogRxIdx++;
-			if (dayLogRxIdx > MAXDAYLOGVALUES)
-				dayLogRxIdx = 0;
-			left = count - len;
+int left = 0;
+int len = 0;
+if (dayLogRxIdx != (dayLogTxIdx)) {  // something to send?
+	do {
+		len += sprintf(pBuffer + len, "%d,", static_cast<int>(dayLog[dayLogRxIdx].timeStamp));
+		for (int n = 0; n < NR_CHANNELS; n++) {
+			len += sprintf(pBuffer + len, "%1.4f,", dayLog[dayLogRxIdx].voltage[n]);
+		}
+		len += sprintf(pBuffer + len, "\n");
+		dayLogRxIdx++;
+		if (dayLogRxIdx > MAXDAYLOGVALUES)
+			dayLogRxIdx = 0;
+		left = count - len;
 
-		} while ((dayLogRxIdx != dayLogTxIdx) && (left > 40));
-	}
-	return (len);
+	} while ((dayLogRxIdx != dayLogTxIdx) && (left > 40));
+}
+return (len);
 }
 
 calValues_t calValues;
@@ -515,61 +512,61 @@ const CGIdesc_t writeVarDescriptors[] = {
 // parse items send by senditem (HTML post)
 
 void parseCGIWriteData(char *buf, int received) {
-	int idx = -1;
-	if (strncmp(buf, "setCal:", 7) == 0) {  //
-		idx = readActionScript(&buf[7], writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
+int idx = -1;
+if (strncmp(buf, "setCal:", 7) == 0) {  //
+	idx = readActionScript(&buf[7], writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
+	if (idx >= 0) {
+		if (testChannel[idx].averagedCurrent != 0) {
+			float measuredCurrent = static_cast<float>(testChannel[idx].averagedCurrent) / userSettings.currentGain[idx];
+			userSettings.currentGain[idx] = calValues.current[idx] / measuredCurrent;
+			saveSettings();
+		}
+	}
+}
+if (idx < 0) {
+	if (strncmp(buf, "setName:", 8) == 0) {
+		idx = readActionScript(&buf[8], writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
 		if (idx >= 0) {
-			if (testChannel[idx].averagedCurrent != 0) {
-				float measuredCurrent = static_cast<float>(testChannel[idx].averagedCurrent) / userSettings.currentGain[idx];
-				userSettings.currentGain[idx] = calValues.current[idx] / measuredCurrent;
+			if (strcmp(tempName, userSettings.moduleName) != 0) {
+				strcpy(userSettings.moduleName, tempName);
+				ESP_ERROR_CHECK(mdns_hostname_set(userSettings.moduleName));
+				ESP_LOGI(TAG, "Hostname set to %s", userSettings.moduleName);
 				saveSettings();
 			}
 		}
 	}
-	if (idx < 0) {
-		if (strncmp(buf, "setName:", 8) == 0) {
-			idx = readActionScript(&buf[8], writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
-			if (idx >= 0) {
-				if (strcmp(tempName, userSettings.moduleName) != 0) {
-					strcpy(userSettings.moduleName, tempName);
-					ESP_ERROR_CHECK(mdns_hostname_set(userSettings.moduleName));
-					ESP_LOGI(TAG, "Hostname set to %s", userSettings.moduleName);
-					saveSettings();
-				}
+}
+
+if (idx < 0) { // none of above
+	idx = readActionScript(buf, writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
+	switch (idx) {
+	case 5: // setCurrent -> switch to calibration mode
+		for (int n = 0; n < NR_CHANNELS; n++) {
+			testChannel[n].status = STATUS_CALIBRATION;
+			testChannel[n].setCurrent = calCurrent;
+		}
+		break;
+	case 6:
+		for (int n = 0; n < NR_CHANNELS; n++) {
+			testChannel[n].status = STATUS_NO_BAT;
+			testChannel[n].setCurrent = 0;
+		}
+		break;
+	case 7: // clearLog
+		clearLog();
+		break;
+	case 8: // setFunction
+		for (int n = 0; n < NR_FUNCTIONS; n++) {
+			if (strcmp(functionText[n], tempName) == 0) {
+				function = (function_t) n;
+				saveSettings();
 			}
 		}
-	}
+		break;
+	default:
+		break;
 
-	if (idx < 0) { // none of above
-		idx = readActionScript(buf, writeVarDescriptors, NR_WRITEVARDESCRIPTORS);
-		switch (idx) {
-		case 5: // setCurrent -> switch to calibration mode
-			for (int n = 0; n < NR_CHANNELS; n++) {
-				testChannel[n].status = STATUS_CALIBRATION;
-				testChannel[n].setCurrent = calCurrent;
-			}
-			break;
-		case 6:
-			for (int n = 0; n < NR_CHANNELS; n++) {
-				testChannel[n].status = STATUS_NO_BAT;
-				testChannel[n].setCurrent = 0;
-			}
-			break;
-		case 7: // clearLog
-			clearLog();
-			break;
-		case 8: // setFunction
-			for (int n = 0; n < NR_FUNCTIONS; n++) {
-				if (strcmp(functionText[n], tempName) == 0) {
-					userSettings.function = (function_t) n;
-					saveSettings();
-				}
-			}
-			break;
-		default:
-			break;
-
-		}
 	}
+}
 }
 

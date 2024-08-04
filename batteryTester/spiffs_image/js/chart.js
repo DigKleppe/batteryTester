@@ -15,9 +15,9 @@ var firstRequest = true;
 var plotTimer = 6; // every 60 seconds plot averaged value
 var rows = 0;
 
-var SECONDSPERTICK = 1;// log interval 
+var SECONDSPERTICK = (5*60);// log interval 
 var LOGDAYS = 1;
-var MAXPOINTS = LOGDAYS * 24 * 60 * 60
+var MAXPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK)
 
 var dayNames = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
 var displayNames = ["", "1", "2", "3", "4"];

@@ -12,8 +12,8 @@
 #include <stdint.h>
 #include "measureTask.h"
 
-#define LOGINTERVAL 				1
-#define MAXDAYLOGVALUES				((2*60*60)/LOGINTERVAL) // todo for jtag debugging max 1 hour!
+#define LOGINTERVAL 				(5*60) // seconds
+#define MAXDAYLOGVALUES				((24*60*60)/LOGINTERVAL)
 
 typedef struct {
 	int32_t timeStamp;

@@ -59,19 +59,21 @@ typedef struct {
   float maxVoltage;
   int fullDebounces;
   int noBatDebounces;
+  int chargeTimer;
   bool isTested;
 } testChannel_t;
 
-extern testChannel_t testChannel[NR_CHANNELS];
-extern bool setupNeeded;
-extern QueueHandle_t LCDsemphr;
-
-#define MAXCHARGEDVOLATGE 1.9
+#define MAXCHARGEDVOLATGE 1.7
 #define DECHARDEDVOLATAGE 0.9
 #define NOBATVOLTAGE 4.0
 #define ERRORVOLTAGE 0.6
 #define NOCURRENT 2       // mA
 #define CHARGEDDROP 0.008 // V full charged
+
+extern testChannel_t testChannel[NR_CHANNELS];
+extern bool setupNeeded;
+extern QueueHandle_t LCDsemphr;
+extern function_t function = FUNCTION_TESTING;
 
 void testTask(void *pvParameter);
 void currentRegulatorTask(void *pvParameter);

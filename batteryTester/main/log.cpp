@@ -84,6 +84,6 @@ int getDayLogScript(char *pBuffer, int count) {
 void clearLog( void ){
 	dayLogTxIdx = 0;
 	dayLogRxIdx = 0;
-	dayLog[dayLogRxIdx].timeStamp = 0;
+	dayLog[0].timeStamp = 0;
 }
 

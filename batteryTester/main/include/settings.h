@@ -25,7 +25,7 @@ typedef struct {
 	float currentGain[NR_CHANNELS];
 	float voltageOffset[NR_CHANNELS];
 	float voltageGain[NR_CHANNELS];
-	function_t function;
+	function_t dummy;
 	char moduleName[MAX_STRLEN+1];
 	char checkstr[MAX_STRLEN+1];
 }userSettings_t;
