@@ -72,6 +72,8 @@ typedef struct {
 #define CHARGEDDROP 0.008 // V full charged
 #define MAXCHARGETIME	7 // hours charging at 0.2C
 
+#define MAXCURRENT		800 // mA
+
 extern testChannel_t testChannel[NR_CHANNELS];
 extern bool setupNeeded;
 extern QueueHandle_t LCDsemphr;

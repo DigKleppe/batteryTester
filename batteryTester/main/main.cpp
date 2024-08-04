@@ -115,7 +115,10 @@ void guiTask(void *pvParameter)
 					{
 						testChannel[n].deChargeCurrent = stdCapacity[selCapIdx] / 5;
 						testChannel[n].chargeCurrent = stdCapacity[selCapIdx] / 5;
-						testChannel[n].setCurrent = testChannel[n].deChargeCurrent/2;
+
+						testChannel[n].setCurrent = testChannel[n].deChargeCurrent * 2;
+						if (testChannel[n].setCurrent > MAXCURRENT  )
+							testChannel[n].setCurrent = MAXCURRENT;
 						testChannel[n].status = STATUS_DECHARGING1; // decharge first
 
 						state = uiStateWAIT;
