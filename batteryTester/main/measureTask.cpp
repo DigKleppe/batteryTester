@@ -173,6 +173,7 @@ void testTask(void *pvParameter) {
 						if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
 							//		testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
 							testChannel[n].setCurrent = 0;
+
 							if (function == FUNCTION_DECHARGING) {
 								testChannel[n].status = STATUS_DECHARGED;
 							} else
@@ -296,9 +297,10 @@ void testTask(void *pvParameter) {
 						if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
 							testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
 							testChannel[n].setCurrent = 0;
-							if (function == FUNCTION_DECHARGING) {
+						//	if (function == FUNCTION_DECHARGING)
+							if(1) // todo for test only
 								testChannel[n].status = STATUS_DECHARGED;
-							} else
+							 else
 								testChannel[n].status = STATUS_WAIT2;
 						}
 					}

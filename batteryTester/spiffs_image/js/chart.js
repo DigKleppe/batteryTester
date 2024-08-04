@@ -254,7 +254,6 @@ function timer() {
 	var arr2;
 	var str;
 	var chargeInfoTbl;
-	presc--
 	if (SIMULATE) {
 		simplot();
 
@@ -282,7 +281,7 @@ function timer() {
 			for (var m = 0; m < arr2.length; m++)
 				chargeInfoTbl.rows[m + 1].cells[colls + 1].innerHTML = arr2[m];
 		}
-
+		presc--;
 
 		if (presc == 0) {
 			presc = REQINTERVAL;
