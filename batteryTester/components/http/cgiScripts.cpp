@@ -54,8 +54,8 @@ static const tCGI CGIurls[] = {
 		{ "/cgi-bin/getSensorName", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getSensorNameScript},
 		{ "/cgi-bin/saveSettings", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) saveSettingsScript},
 		{ "/cgi-bin/cancelSettings", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) cancelSettingsScript},
-    
-	};
+		{ "/cgi-bin/getChargeTable", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getChargeTableScript},
+};
 
 #define NUM_CGIurls ( sizeof (CGIurls)/sizeof( tCGI))
 

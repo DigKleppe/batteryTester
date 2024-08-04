@@ -14,8 +14,9 @@ var REQINTERVAL = 1; // sec
 var firstRequest = true;
 var plotTimer = 6; // every 60 seconds plot averaged value
 var rows = 0;
+var chargeInfoTbl;
 
-var SECONDSPERTICK = (5*60);// log interval 
+var SECONDSPERTICK = (5 * 60);// log interval 
 var LOGDAYS = 1;
 var MAXPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK)
 
@@ -147,8 +148,10 @@ function initTimer() {
 	}
 
 	chartRdy = true;
+
 	if (SIMULATE) {
 		simplot();
+		makeChargeInfoTable();
 	}
 	else {
 		setInterval(function() { timer() }, 1000);
@@ -217,10 +220,10 @@ function simplot() {
 
 	plotArray(str);
 
-	for (var m = 1; m < NRItems; m++) { // time not used for now 
-		var value = simValue2; // from string to float
-		document.getElementById(displayNames[m]).innerHTML = value.toFixed(2);
-	}
+	//	for (var m = 1; m < NRItems; m++) { // time not used for now 
+	//		var value = simValue2; // from string to float
+	//		document.getElementById(displayNames[m]).innerHTML = value.toFixed(2);
+	//	}
 }
 
 function plotArray(str) {
@@ -293,9 +296,9 @@ function timer() {
 				}
 
 			}
-			chargeInfoTbl = document.getElementById("chargeInfoTable");
+		//	chargeInfoTbl = document.getElementById("chargeInfoTable");
 			str = getItem("getChargeValues");
-			arr = str.split(";");
+			arr = str.split("\n");
 			for (var rows = 0; rows < arr.length; rows++) {
 				arr2 = arr[rows].split(",");
 				for (var m = 0; m < 4; m++)
@@ -305,8 +308,8 @@ function timer() {
 	}
 }
 
-function functionRbClick( val){
-	sendItem( "setFunction="+ val );
+function functionRbClick(val) {
+	sendItem("setFunction=" + val);
 }
 
 function startStop() {
@@ -327,3 +330,53 @@ function clearChart() {
 }
 
 
+function makeChargeInfoTable() {
+	var str;
+	if (SIMULATE) {
+		str = "Meting,xActueel,xOffset,xx\n rij1, rij2 , rij3\n";
+
+	}
+	else {
+		str = getItem("getChargeTable");
+	}
+	chargeInfoTbl = makeTable("chargeInfoTable", str);
+}
+
+function makeTable(tableID, descriptorData) {
+
+	var tableName = document.getElementById(tableID);
+	var x = tableName.rows.length
+	for (var r = 0; r < x; r++) {
+		tableName.deleteRow(-1);
+	}
+	tblBody = document.createElement("tbody");
+	var lines = descriptorData.split("\n");
+
+	var colls = lines[0].split(",");
+	var rows = lines[1].split(",");
+
+	for (var i = 0; i < rows.length+1; i++) {
+		var row = document.createElement("tr");
+		for (var j = 0; j < colls.length; j++) {
+			if (i == 0) {
+				var cell = document.createElement("th");
+				var cellText = document.createTextNode(colls[j]);
+				cell.appendChild(cellText);
+			}
+			else {
+				if (j == 0) {
+					var cell = document.createElement("th");
+					var cellText = document.createTextNode(rows[i-1]);
+					cell.appendChild(cellText);
+				}
+				else {
+					var cell = document.createElement("td");
+				}
+			}
+			row.appendChild(cell);
+		}
+		tblBody.appendChild(row);
+	}
+	tableName.appendChild(tblBody);
+	return tableName;
+}

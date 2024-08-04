@@ -99,6 +99,7 @@ int getSensorNameScript (char *pBuffer, int count);
 void parseCGIWriteData(char *buf, int received);
 void setCurrentScript(char *buf, int received);
 void stopCalScript(char *buf, int received);
+int getChargeTableScript(char *pBuffer, int count);
 
 
 #endif /* MAIN_INCLUDE_MEASURETASK_H_ */
