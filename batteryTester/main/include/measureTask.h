@@ -18,11 +18,13 @@
 typedef enum {
   STATUS_NO_BAT,
   STATUS_SETUP,
+  STATUS_DECHARGING1,
+  STATUS_WAIT0,
   STATUS_CHARGING,
   STATUS_CHARGING_MEAS1,
   STATUS_CHARGING_MEAS2,
   STATUS_WAIT1,
-  STATUS_DECHARGING,
+  STATUS_DECHARGING2,
  // STATUS_TESTED,
   STATUS_WAIT2,
   STATUS_CHARGED,
@@ -40,7 +42,6 @@ typedef enum {
 	NR_FUNCTIONS
 } function_t;
 
-extern function_t function;
 
 typedef struct {
   testChannelStatus status;
@@ -69,11 +70,12 @@ typedef struct {
 #define ERRORVOLTAGE 0.6
 #define NOCURRENT 2       // mA
 #define CHARGEDDROP 0.008 // V full charged
+#define MAXCHARGETIME	7 // hours charging at 0.2C
 
 extern testChannel_t testChannel[NR_CHANNELS];
 extern bool setupNeeded;
 extern QueueHandle_t LCDsemphr;
-extern function_t function = FUNCTION_TESTING;
+extern function_t function;
 
 void testTask(void *pvParameter);
 void currentRegulatorTask(void *pvParameter);

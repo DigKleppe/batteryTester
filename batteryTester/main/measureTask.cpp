@@ -35,10 +35,10 @@ Averager avgm4(MEASTIME);
 
 Averager *avgm[] = { &avgm1, &avgm2, &avgm3, &avgm4 };
 
-function_t function;
+function_t function = FUNCTION_TESTING;
 
-static const char *statusText[] = { { "Geen batterij" }, { "Instellen" }, { "Laden" }, { "Meten" }, { "Meten" }, { "-" }, { "Ontladen" }, { "-" }, { "Getest, geladen" }, {
-		"Ontladen" }, { "Testmode" }, { "Calibratie" }, { "Fout" } };
+static const char *statusText[] = { { "Geen batterij" }, { "Instellen" }, { "Ontladen1" }, { "-" }, { "Laden" }, { "Meten" }, { "Meten" }, { "-" }, { "Ontladen2" }, { "-" }, {
+		"Getest, geladen" }, { "Ontladen" }, { "Testmode" }, { "Calibratie" }, { "Fout" } };
 
 static const char *functionText[] = { { "Testen" }, { "Laden" }, { "Ontladen" } };
 
@@ -148,6 +148,38 @@ void testTask(void *pvParameter) {
 				// handled in main
 				break;
 
+			case STATUS_DECHARGING1:
+				if (function == FUNCTION_CHARGING) {
+					testChannel[n].status = STATUS_SETUP;
+					testChannel[n].setCurrent = 0;
+				} else {
+					//		ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1, -testChannel[n].averagedCurrent, testChannel[n].voltage);
+					log.voltage[n] = testChannel[n].voltage;
+
+					sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent, testChannel[n].voltage);
+					testChannel[n].outCharge += -testChannel[n].averagedCurrent; // in mAs
+					if (noBat(n))
+						testChannel[n].status = STATUS_NO_BAT;
+					else {
+						if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
+							//		testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
+							testChannel[n].setCurrent = 0;
+							if (function == FUNCTION_DECHARGING) {
+								testChannel[n].status = STATUS_DECHARGED;
+							} else
+								testChannel[n].status = STATUS_WAIT0;
+						}
+					}
+				}
+				break;
+
+			case STATUS_WAIT0:
+				if (testChannel[n].averagedCurrent < NOCURRENT) {
+					testChannel[n].status = STATUS_CHARGING;
+					testChannel[n].chargeTimer = MAXCHARGETIME * 3600;
+				}
+				break;
+
 			case STATUS_CHARGING:
 				//	ESP_LOGI(TAG, "%d charging %3d mA %4.3f %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage,testChannel[n].maxVoltage );
 				if (function == FUNCTION_DECHARGING) {
@@ -168,6 +200,18 @@ void testTask(void *pvParameter) {
 
 							measTimer[n] = 5;
 							testChannel[n].status = STATUS_CHARGING_MEAS1;
+						}
+					}
+					if (testChannel[n].chargeTimer >0)
+						testChannel[n].chargeTimer--;
+					else {
+						ESP_LOGI(TAG, "%d max chargingtime reached", n+1);
+						if (testChannel[n].isTested) { // recharging after test
+							testChannel[n].status = STATUS_CHARGED;
+							testChannel[n].setCurrent = 5; // trickle
+						} else {
+							testChannel[n].setCurrent = 0;
+							testChannel[n].status = STATUS_WAIT1; // go on with test
 						}
 					}
 				}
@@ -217,17 +261,16 @@ void testTask(void *pvParameter) {
 				//	ESP_LOGI(TAG, "%d wait1 %d mA %4.3f V", n + 1, testChannel[n].current, testChannel[n].voltage);
 				if (testChannel[n].current < NOCURRENT) {
 					testChannel[n].measuredCapacity = 0;
-					testChannel[n].samples = 0;
 					if (function == FUNCTION_CHARGING) {
 						testChannel[n].status = STATUS_CHARGED;
 					} else {
 						testChannel[n].setCurrent = -testChannel[n].deChargeCurrent;
-						testChannel[n].status = STATUS_DECHARGING;
+						testChannel[n].status = STATUS_DECHARGING2;
 					}
 				}
 				break;
 
-			case STATUS_DECHARGING:
+			case STATUS_DECHARGING2:
 				if (function == FUNCTION_CHARGING) {
 					testChannel[n].status = STATUS_SETUP;
 					testChannel[n].setCurrent = 0;
@@ -237,7 +280,6 @@ void testTask(void *pvParameter) {
 
 					sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent, testChannel[n].voltage);
 					testChannel[n].outCharge += -testChannel[n].averagedCurrent; // in mAs
-					testChannel[n].samples++;
 					if (noBat(n))
 						testChannel[n].status = STATUS_NO_BAT;
 					else {
@@ -263,6 +305,7 @@ void testTask(void *pvParameter) {
 					testChannel[n].isTested = true;
 					//	testChannel[n].status = STATUS_TESTED;
 					testChannel[n].status = STATUS_CHARGING; // recharge
+					testChannel[n].chargeTimer = MAXCHARGETIME * 3600;
 					testChannel[n].maxVoltage = 0;
 					testChannel[n].noBatDebounces = 0;
 				}
@@ -270,30 +313,39 @@ void testTask(void *pvParameter) {
 
 			case STATUS_CHARGED:
 				//		ESP_LOGI(TAG, "%d ready %4d mA %4.3f V", n + 1, testChannel[n].averagedCurrent, testChannel[n].voltage);
-				log.voltage[n] = testChannel[n].voltage;
-				displayTimer[n]--;
+				if (function == FUNCTION_DECHARGING)
+					testChannel[n].status = STATUS_WAIT1;
+				else {
 
-				if (displayTimer[n] == 0) {
-					displayTimer[n] = 5;
-					displayToggle[n] = !displayToggle[n];
-				}
-				if (displayToggle[n])
-					sprintf(LCDline + len, "*%4dmAh*  Vol", testChannel[n].measuredCapacity);
-				else
-					sprintf(LCDline + len, "%4.3fV     Vol", testChannel[n].voltage);
+					log.voltage[n] = testChannel[n].voltage;
+					displayTimer[n]--;
 
-				if (noBat(n)) {
-					testChannel[n].status = STATUS_NO_BAT;
-					displayTimer[n] = 10;
-					displayToggle[n] = true;
+					if (displayTimer[n] == 0) {
+						displayTimer[n] = 5;
+						displayToggle[n] = !displayToggle[n];
+					}
+					if (displayToggle[n])
+						sprintf(LCDline + len, "*%4dmAh*  Vol", testChannel[n].measuredCapacity);
+					else
+						sprintf(LCDline + len, "%4.3fV     Vol", testChannel[n].voltage);
+
+					if (noBat(n)) {
+						testChannel[n].status = STATUS_NO_BAT;
+						displayTimer[n] = 10;
+						displayToggle[n] = true;
+					}
 				}
 				break;
 
 			case STATUS_DECHARGED:
-				log.voltage[n] = testChannel[n].voltage;
-				sprintf(LCDline + len, "%1.2fV Ontladen", testChannel[n].voltage);
-				if (noBat(n))
-					testChannel[n].status = STATUS_NO_BAT;
+				if (function == FUNCTION_CHARGING)
+					testChannel[n].status = STATUS_SETUP;
+				else {
+					log.voltage[n] = testChannel[n].voltage;
+					sprintf(LCDline + len, "%1.2fV Ontladen", testChannel[n].voltage);
+					if (noBat(n))
+						testChannel[n].status = STATUS_NO_BAT;
+				}
 				break;
 
 			case STATUS_TESTMODE:
@@ -331,7 +383,7 @@ void testTask(void *pvParameter) {
 		xTaskDelayUntil(&xLastWakeTime, 1000);
 	}
 }
-}
+
 
 // called from CGI
 
