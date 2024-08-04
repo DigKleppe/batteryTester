@@ -249,7 +249,6 @@ void testTask(void *pvParameter) {
 					measTimer[n] = MEASINTERVAL;
 					testChannel[n].voltage = avgm[n]->getLowest() / 1000.0; //    avgm[n]->average() / 1000.0;
 					log.voltage[n] = testChannel[n].voltage; // log decharging is currentless
-					addToLog(log);
 					tLog[n]->write(testChannel[n].voltage * 1000);
 					//	ESP_LOGI(TAG, "%d Vmeas %4.3f", n + 1, testChannel[n].voltage);
 					if (isFull(n)) {

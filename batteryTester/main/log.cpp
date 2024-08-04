@@ -7,6 +7,7 @@
 #include "log.h"
 #include "settings.h"
 #include <stdint.h>
+#include <string.h>
 
 uint32_t  timeStamp=1;
 int dayLogRxIdx;
@@ -25,7 +26,6 @@ void addToLog( log_t logValue)
 	dayLogTxIdx++;
 	if (dayLogTxIdx >= MAXDAYLOGVALUES)
 		dayLogTxIdx = 0;
-
 }
 
 // reads all avaiable data from log
@@ -84,6 +84,6 @@ int getDayLogScript(char *pBuffer, int count) {
 void clearLog( void ){
 	dayLogTxIdx = 0;
 	dayLogRxIdx = 0;
-	dayLog[0].timeStamp = 0;
+	memset(dayLog,0,sizeof ( dayLog));
 }
 

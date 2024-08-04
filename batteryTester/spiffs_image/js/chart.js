@@ -278,7 +278,7 @@ function timer() {
 		arr = str.split("\n");
 		for (var colls = 0; colls < arr.length; colls++) {
 			arr2 = arr[colls].split(",");
-			for (var m = 0; m < arr2.length; m++)
+			for (var m = 0; m < arr2.length-1; m++)
 				chargeInfoTbl.rows[m + 1].cells[colls + 1].innerHTML = arr2[m];
 		}
 		presc--;
@@ -293,9 +293,6 @@ function timer() {
 					if (arr[0] != lastTimeStamp) {
 						lastTimeStamp = arr[0];
 						for (var m = 1; m < NRItems; m++) { // time not used for now 
-							//							var value = parseFloat(arr[m]); // from string to float
-							//							if (value < -100)
-							//								arr[m] = "--";
 							if (chartSeries[m] != -1)
 								plot(chartSeries[m], arr[m]);
 						}
