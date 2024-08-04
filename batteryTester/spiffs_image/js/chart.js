@@ -10,7 +10,7 @@ var table;
 var presc = 1;
 var simMssgCnts = 0;
 var lastTimeStamp = 0;
-var REQINTERVAL = 1; // sec
+var REQINTERVAL = (5 * 60); // sec
 var firstRequest = true;
 var plotTimer = 6; // every 60 seconds plot averaged value
 var rows = 0;
@@ -148,10 +148,9 @@ function initTimer() {
 	}
 
 	chartRdy = true;
-
+	makeChargeInfoTable();
 	if (SIMULATE) {
 		simplot();
-		makeChargeInfoTable();
 	}
 	else {
 		setInterval(function() { timer() }, 1000);
@@ -261,6 +260,30 @@ function timer() {
 
 	}
 	else {
+		if (firstRequest) {
+			arr = getItem("getLogMeasValues");
+			plotArray(arr);
+			firstRequest = false;
+
+			arr = getItem("getFunction");  // set function RB
+
+			var rb = document.getElementsByClassName('rw-rb-state');
+			for (var i = 0; i < rb.length; i++) {
+				if (arr == rb[i].value)
+					rb[i].checked = true;
+			}
+
+		}
+		chargeInfoTbl = document.getElementById("chargeInfoTable");
+		str = getItem("getChargeValues");
+		arr = str.split("\n");
+		for (var colls = 0; colls < arr.length; colls++) {
+			arr2 = arr[colls].split(",");
+			for (var m = 0; m < arr2.length; m++)
+				chargeInfoTbl.rows[m + 1].cells[colls + 1].innerHTML = arr2[m];
+		}
+
+
 		if (presc == 0) {
 			presc = REQINTERVAL;
 			str = getItem("getRTMeasValues");
@@ -282,28 +305,7 @@ function timer() {
 					}
 				}
 			}
-			if (firstRequest) {
-				arr = getItem("getLogMeasValues");
-				plotArray(arr);
-				firstRequest = false;
 
-				arr = getItem("getFunction");  // set function RB
-
-				var rb = document.getElementsByClassName('rw-rb-state');
-				for (var i = 0; i < rb.length; i++) {
-					if (arr == rb[i].value)
-						rb[i].checked = true;
-				}
-
-			}
-		//	chargeInfoTbl = document.getElementById("chargeInfoTable");
-			str = getItem("getChargeValues");
-			arr = str.split("\n");
-			for (var rows = 0; rows < arr.length; rows++) {
-				arr2 = arr[rows].split(",");
-				for (var m = 0; m < 4; m++)
-					chargeInfoTbl.rows[rows + 2].cells[m + 1].innerHTML = arr2[m];
-			}
 		}
 	}
 }
@@ -355,7 +357,7 @@ function makeTable(tableID, descriptorData) {
 	var colls = lines[0].split(",");
 	var rows = lines[1].split(",");
 
-	for (var i = 0; i < rows.length+1; i++) {
+	for (var i = 0; i < rows.length + 1; i++) {
 		var row = document.createElement("tr");
 		for (var j = 0; j < colls.length; j++) {
 			if (i == 0) {
@@ -366,7 +368,7 @@ function makeTable(tableID, descriptorData) {
 			else {
 				if (j == 0) {
 					var cell = document.createElement("th");
-					var cellText = document.createTextNode(rows[i-1]);
+					var cellText = document.createTextNode(rows[i - 1]);
 					cell.appendChild(cellText);
 				}
 				else {

@@ -483,8 +483,8 @@ int getChargeTableScript(char *pBuffer, int count) {
 	switch (scriptState) {
 	case 0:
 		scriptState++;
-		len += sprintf(pBuffer + len, "%s", "Positie 1 Positie 2 Positie 3 Positie 4\n");  // horizontal
-		len += sprintf(pBuffer + len, "%s",
+		len += sprintf(pBuffer + len, "%s", "Meting,Positie 1,Positie 2,Positie 3,Positie 4\n");  // horizontal
+		len += sprintf(pBuffer + len, "%s\n",
 				"Status,Gemeten capaciteit (mAh):,Spanning (V):,Ingaande Capaciteit (mAh):,Actuele capaciteit (mAh);,Vorige laadspanning (V), laadspanning 1hr geleden (V):\n"); // vertical
 		break;
 	default:
