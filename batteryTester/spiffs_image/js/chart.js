@@ -329,6 +329,11 @@ function clearLog() {
 function clearChart() {
 	clear();
 }
+function refreshChart() {
+	data.removeRows(0, data.getNumberOfRows());
+	arr = getItem("getLogMeasValues");
+	plotArray(arr);
+}
 
 
 function makeChargeInfoTable() {
