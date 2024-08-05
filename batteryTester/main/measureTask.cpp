@@ -506,8 +506,8 @@ int getChargeValuesScript(char *pBuffer, int count) {
 			len += sprintf(pBuffer + len, "%3.3f,", testChannel[n].voltage);
 			len += sprintf(pBuffer + len, "%d,", testChannel[n].inCharge / 3600);
 			len += sprintf(pBuffer + len, "%d,", testChannel[n].outCharge / 3600);
-			len += sprintf(pBuffer + len, "%3.3f,", static_cast<float>(tLog[n]->getValue(1)) / 1000.0); //  5 min ago
-			len += sprintf(pBuffer + len, "%3.3f\n", static_cast<float>(tLog[n]->getValue(12)) / 1000.0); //  1 hour ago
+		//	len += sprintf(pBuffer + len, "%3.3f,", static_cast<float>(tLog[n]->getValue(1)) / 1000.0); //  5 min ago
+		//	len += sprintf(pBuffer + len, "%3.3f\n", static_cast<float>(tLog[n]->getValue(12)) / 1000.0); //  1 hour ago
 		}
 		break;
 	case 2:
