@@ -24,7 +24,6 @@ var dayNames = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
 var displayNames = ["", "1", "2", "3", "4"];
 var cbIDs = ["", "T1cb", "T2cb", "T3cb", "T4cb"];
 
-
 var chartSeries = [-1, -1, -1, -1, -1];
 
 var NRItems = displayNames.length;
@@ -200,29 +199,8 @@ function simplot() {
 			else
 				str = str + '\n';
 		}
-		//		for (var n = 0; n < NRItems; n++) {  // status
-		//			str = str + n;
-		//			if (n < (NRItems - 1))
-		//				str = str + ',';
-		//			else
-		//				str = str + ';';
-		//		}
-		//		for (var n = 0; n < NRItems; n++) {  // energy
-		//			str = str + tick;
-		//			tick++;
-		//			if (n < (NRItems - 1))
-		//				str = str + ',';
-		//			else
-		//				str = str + ';';
-		//		}
 	}
-
 	plotArray(str);
-
-	//	for (var m = 1; m < NRItems; m++) { // time not used for now 
-	//		var value = simValue2; // from string to float
-	//		document.getElementById(displayNames[m]).innerHTML = value.toFixed(2);
-	//	}
 }
 
 function plotArray(str) {

@@ -52,8 +52,8 @@ typedef struct {
   int averagedCurrent;  // mA
   int measuredCapacity; // mAH
 
-  int inCharge;		// mAs
-  int outCharge;    // mAs
+  int chargedCapacity;		// mAs
+  int dechargedCapacity;    // mAs
 
   int samples;
   float voltage;
@@ -70,7 +70,7 @@ typedef struct {
 #define ERRORVOLTAGE 0.6
 #define NOCURRENT 2       // mA
 #define CHARGEDDROP 0.008 // V full charged
-#define MAXCHARGETIME	7 // hours charging at 0.2C
+#define MAXCHARGETIME	6 // hours charging at 0.2C
 
 #define MAXCURRENT		800 // mA
 
