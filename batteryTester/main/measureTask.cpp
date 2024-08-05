@@ -46,7 +46,7 @@ TimeLog *tLog[] = { &tl1, &tl2, &tl3, &tl4 };
 function_t function = FUNCTION_TESTING;
 
 static const char *statusText[] = { { "Geen batterij" }, { "Instellen" }, { "Ontladen1" }, { "-" }, { "Laden" }, { "Meten" }, { "Meten" }, { "-" }, { "Ontladen2" }, { "-" }, {
-		"Getest, geladen" }, { "Ontladen" }, { "Testmode" }, { "Calibratie" }, { "Fout" } };
+		"Getest, Geladen" }, { "Ontladen" }, { "Testmode" }, { "Calibratie" }, { "Fout" } };
 
 static const char *functionText[] = { { "Testen" }, { "Laden" }, { "Ontladen" } };
 
@@ -55,7 +55,7 @@ testChannel_t testChannel[NR_CHANNELS];
 extern bool currentRegulatorStarted;
 
 bool noBat(int idx) {
-	if ((testChannel[idx].voltage > NOBATVOLTAGE) || (testChannel[idx].voltage < NOBATVOLTAGEDECHARGING))  {
+	if ((testChannel[idx].voltage > NOBATVOLTAGE) || (testChannel[idx].voltage < NOBATVOLTAGEDECHARGING)) {
 		if (testChannel[idx].noBatDebounces >= NOBATDEBOUNCES) {
 			return true;
 		}
@@ -67,8 +67,7 @@ bool noBat(int idx) {
 }
 
 bool isFull(int idx) {
-	float diff;
-
+//	float diff;
 	if (testChannel[idx].voltage > MAXCHARGEDVOLATGE) // or bad contact
 	{
 		if (testChannel[idx].fullDebounces >= FULLBATDEBOUNCES) {
@@ -79,13 +78,11 @@ bool isFull(int idx) {
 	} else
 		testChannel[idx].fullDebounces = 0;
 
-	diff = testChannel[idx].maxVoltage - testChannel[idx].voltage;
-
-	if (diff > CHARGEDDROP) {
-		ESP_LOGE(TAG, "%d full voltage dropped %f ", idx + 1, diff);
-		return true;
-
-	}
+	//	diff = testChannel[idx].maxVoltage - testChannel[idx].voltage;
+//	if (diff > CHARGEDDROP) {
+//		ESP_LOGE(TAG, "%d full voltage dropped %f ", idx + 1, diff);
+//		return true;
+//	}
 	if (testChannel[idx].maxVoltage < testChannel[idx].voltage)
 		testChannel[idx].maxVoltage = testChannel[idx].voltage;
 	ESP_LOGI(TAG, "%d Vbat: %4.3f Vmax: %4.3f V", idx + 1, testChannel[idx].voltage, testChannel[idx].maxVoltage);
@@ -127,11 +124,11 @@ void testTask(void *pvParameter) {
 
 			case STATUS_NO_BAT:
 				//			ESP_LOGI(TAG, "%d no battery %4.3f V", n + 1, testChannel[n].voltage);
-				if (testChannel[n].voltage < ERRORVOLTAGE){
-					sprintf(LCDline + len, "* Fout * %3.2f V", testChannel[n].voltage);		testChannel[n].setCurrent = 0;
+				if (testChannel[n].voltage < ERRORVOLTAGE) {
+					sprintf(LCDline + len, "* Fout * %3.2f V", testChannel[n].voltage);
 					testChannel[n].setCurrent = 0;
-				}
-				else {
+					testChannel[n].setCurrent = 0;
+				} else {
 					if (noBat(n))
 						strcpy(LCDline + len, "Geen batterij");
 					else {
@@ -173,7 +170,7 @@ void testTask(void *pvParameter) {
 						if (noBat(n))
 							testChannel[n].status = STATUS_NO_BAT;
 						else {
-							if ((testChannel[n].voltage < DECHARDEDVOLATAGE) && (testChannel[n].voltage > NOBATVOLTAGEDECHARGING)){
+							if ((testChannel[n].voltage < DECHARDEDVOLATAGE) && (testChannel[n].voltage > NOBATVOLTAGEDECHARGING)) {
 								//		testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
 								testChannel[n].setCurrent = 0;
 
@@ -200,7 +197,6 @@ void testTask(void *pvParameter) {
 					testChannel[n].status = STATUS_WAIT1;
 					testChannel[n].setCurrent = 0;
 				} else {
-
 					if (testChannel[n].isTested) // recharging
 						sprintf(LCDline + len, "T*%4dmAh* %4.3fV", testChannel[n].measuredCapacity, testChannel[n].voltage);
 					else
@@ -212,21 +208,20 @@ void testTask(void *pvParameter) {
 					else {
 						if (measTimer[n]-- == 0) {
 							testChannel[n].setCurrent = 0; // measure voltage without current
-
 							measTimer[n] = 5;
 							testChannel[n].status = STATUS_CHARGING_MEAS1;
 						}
-					}
-					if (testChannel[n].chargeTimer > 0)
-						testChannel[n].chargeTimer--;
-					else {
-						ESP_LOGI(TAG, "%d max chargingtime reached", n + 1);
-						if (testChannel[n].isTested) { // recharging after test
-							testChannel[n].status = STATUS_CHARGED;
-							testChannel[n].setCurrent = 5; // trickle
-						} else {
-							testChannel[n].setCurrent = 0;
-							testChannel[n].status = STATUS_WAIT1; // go on with test
+						if (testChannel[n].chargeTimer > 0)
+							testChannel[n].chargeTimer--;
+						else {
+							ESP_LOGI(TAG, "%d max chargingtime reached", n + 1);
+							if (testChannel[n].isTested) { // recharging after test
+								testChannel[n].status = STATUS_CHARGED;
+								testChannel[n].setCurrent = 5; // trickle
+							} else {
+								testChannel[n].setCurrent = 0;
+								testChannel[n].status = STATUS_WAIT1; // go on with test
+							}
 						}
 					}
 				}
@@ -299,7 +294,7 @@ void testTask(void *pvParameter) {
 					if (noBat(n))
 						testChannel[n].status = STATUS_NO_BAT;
 					else {
-						if ((testChannel[n].voltage < DECHARDEDVOLATAGE) && (testChannel[n].voltage > NOBATVOLTAGEDECHARGING)){
+						if ((testChannel[n].voltage < DECHARDEDVOLATAGE) && (testChannel[n].voltage > NOBATVOLTAGEDECHARGING)) {
 							testChannel[n].measuredCapacity = testChannel[n].dechargedCapacity / 3600; // to mAh
 							testChannel[n].setCurrent = 0;
 							//	if (function == FUNCTION_DECHARGING)
@@ -309,7 +304,6 @@ void testTask(void *pvParameter) {
 								testChannel[n].status = STATUS_WAIT2;
 						}
 					}
-
 				}
 				break;
 
@@ -334,7 +328,6 @@ void testTask(void *pvParameter) {
 				if (function == FUNCTION_DECHARGING)
 					testChannel[n].status = STATUS_WAIT1;
 				else {
-
 					log.voltage[n] = testChannel[n].voltage;
 					displayTimer[n]--;
 					if (displayTimer[n] == 0) {
