@@ -163,21 +163,24 @@ void testTask(void *pvParameter) {
 					testChannel[n].setCurrent = 0;
 				} else {
 					//		ESP_LOGI(TAG, "%d decharging %d mA %4.3f V", n + 1, -testChannel[n].averagedCurrent, testChannel[n].voltage);
-					log.voltage[n] = testChannel[n].voltage;
-
-					sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent, testChannel[n].voltage);
-					testChannel[n].dechargedCapacity += -testChannel[n].averagedCurrent; // in mAs
-					if (noBat(n))
+					if (noBat(n)) {
 						testChannel[n].status = STATUS_NO_BAT;
-					else {
-						if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
-							//		testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
-							testChannel[n].setCurrent = 0;
+					} else {
+						log.voltage[n] = testChannel[n].voltage;
+						sprintf(LCDline + len, "O %3dmA %4.3fV", -testChannel[n].averagedCurrent, testChannel[n].voltage);
+						testChannel[n].dechargedCapacity += -testChannel[n].averagedCurrent; // in mAs
+						if (noBat(n))
+							testChannel[n].status = STATUS_NO_BAT;
+						else {
+							if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
+								//		testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
+								testChannel[n].setCurrent = 0;
 
-							if (function == FUNCTION_DECHARGING) {
-								testChannel[n].status = STATUS_DECHARGED;
-							} else
-								testChannel[n].status = STATUS_WAIT0;
+								if (function == FUNCTION_DECHARGING) {
+									testChannel[n].status = STATUS_DECHARGED;
+								} else
+									testChannel[n].status = STATUS_WAIT0;
+							}
 						}
 					}
 				}
@@ -196,6 +199,7 @@ void testTask(void *pvParameter) {
 					testChannel[n].status = STATUS_WAIT1;
 					testChannel[n].setCurrent = 0;
 				} else {
+
 					if (testChannel[n].isTested) // recharging
 						sprintf(LCDline + len, "T*%4dmAh* %4.3fV", testChannel[n].measuredCapacity, testChannel[n].voltage);
 					else
@@ -304,6 +308,7 @@ void testTask(void *pvParameter) {
 								testChannel[n].status = STATUS_WAIT2;
 						}
 					}
+
 				}
 				break;
 
@@ -398,7 +403,7 @@ void testTask(void *pvParameter) {
 
 // called from CGI
 
-int getFunctionScript (char *pBuffer, int count) {
+int getFunctionScript(char *pBuffer, int count) {
 	int len = 0;
 	switch (scriptState) {
 	case 0:

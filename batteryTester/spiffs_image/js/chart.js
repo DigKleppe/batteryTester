@@ -248,14 +248,13 @@ function timer() {
 				if (arr == rb[i].value)
 					rb[i].checked = true;
 			}
-
 		}
 		chargeInfoTbl = document.getElementById("chargeInfoTable");
 		str = getItem("getChargeValues");
 		arr = str.split("\n");
 		for (var colls = 0; colls < arr.length; colls++) {
 			arr2 = arr[colls].split(",");
-			for (var m = 0; m < arr2.length-1; m++)
+			for (var m = 0; m < arr2.length; m++)
 				chargeInfoTbl.rows[m + 1].cells[colls + 1].innerHTML = arr2[m];
 		}
 		presc--;
