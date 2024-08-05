@@ -67,6 +67,7 @@ typedef struct {
 #define MAXCHARGEDVOLATGE 1.7
 #define DECHARDEDVOLATAGE 0.9
 #define NOBATVOLTAGE 4.0
+#define NOBATVOLTAGEDECHARGING 0.2
 #define ERRORVOLTAGE 0.6
 #define NOCURRENT 2       // mA
 #define CHARGEDDROP 0.008 // V full charged

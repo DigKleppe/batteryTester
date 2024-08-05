@@ -55,7 +55,7 @@ testChannel_t testChannel[NR_CHANNELS];
 extern bool currentRegulatorStarted;
 
 bool noBat(int idx) {
-	if (testChannel[idx].voltage > NOBATVOLTAGE) {
+	if ((testChannel[idx].voltage > NOBATVOLTAGE) || (testChannel[idx].voltage < NOBATVOLTAGEDECHARGING))  {
 		if (testChannel[idx].noBatDebounces >= NOBATDEBOUNCES) {
 			return true;
 		}
@@ -140,7 +140,6 @@ void testTask(void *pvParameter) {
 						testChannel[n].maxVoltage = 0;
 						testChannel[n].setCurrent = 0;
 						testChannel[n].status = STATUS_SETUP;
-						testChannel[n].noBatDebounces = 0;
 						testChannel[n].isTested = false;
 						tLog[n]->clear();
 
@@ -172,7 +171,7 @@ void testTask(void *pvParameter) {
 						if (noBat(n))
 							testChannel[n].status = STATUS_NO_BAT;
 						else {
-							if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
+							if ((testChannel[n].voltage < DECHARDEDVOLATAGE) && (testChannel[n].voltage > NOBATVOLTAGEDECHARGING)){
 								//		testChannel[n].measuredCapacity = testChannel[n].outCharge / 3600; // to mAh
 								testChannel[n].setCurrent = 0;
 
@@ -298,7 +297,7 @@ void testTask(void *pvParameter) {
 					if (noBat(n))
 						testChannel[n].status = STATUS_NO_BAT;
 					else {
-						if (testChannel[n].voltage < DECHARDEDVOLATAGE) {
+						if ((testChannel[n].voltage < DECHARDEDVOLATAGE) && (testChannel[n].voltage > NOBATVOLTAGEDECHARGING)){
 							testChannel[n].measuredCapacity = testChannel[n].dechargedCapacity / 3600; // to mAh
 							testChannel[n].setCurrent = 0;
 							//	if (function == FUNCTION_DECHARGING)
@@ -336,7 +335,6 @@ void testTask(void *pvParameter) {
 
 					log.voltage[n] = testChannel[n].voltage;
 					displayTimer[n]--;
-
 					if (displayTimer[n] == 0) {
 						displayTimer[n] = 5;
 						displayToggle[n] = !displayToggle[n];
