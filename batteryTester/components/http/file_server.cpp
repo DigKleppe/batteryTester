@@ -256,8 +256,12 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
 			params++;
 		}
 		/* Does the base URI we have isolated correspond to a CGI handler? */
-		if (g_iNumCGIs && g_pCGIs) {
-			for (i = 0; i < g_iNumCGIs; i++) {
+//		if (g_iNumCGIs && g_pCGIs) {
+		if ( g_pCGIs) {
+		//	for (i = 0; i < g_iNumCGIs; i++) {
+			for (i = 0; i ; i++) {
+				if ( g_pCGIs[i].pcCGIName == NULL) // end of table reached, not found
+					break;
 				if (strncmp(filename, g_pCGIs[i].pcCGIName, strlen(g_pCGIs[i].pcCGIName)) == 0) {
 					//		LWIP_DEBUGF(HTTPD_DEBUG,
 					//	printf("CGI %s\n", g_pCGIs[i].pcCGIName);
@@ -272,7 +276,8 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
 			}
 			/* Did we handle this URL as a CGI? If not, reinstate the
 			 * original URL and pass it to the file system directly. */
-			if (i == g_iNumCGIs) {
+		//	if (i == g_iNumCGIs) {
+			if(! foundCGI) {
 				/* Replace the ? marker at the beginning of the parameters */
 				if (params) {
 					params--;

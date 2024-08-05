@@ -15,14 +15,15 @@
 #include "lwip/mem.h"
 
 #include "cgiScripts.h"
-#include "../../main/include/measureTask.h"
+//#include "../../main/include/measureTask.h"
 #include "../../main/include/settings.h"
 #include "../http/include/httpd.h"
 #include "../../main/include/log.h"
+#include "../../main/include/CGItable.h"
 
 
 const tCGI *g_pCGIs;
-int g_iNumCGIs;
+//int g_iNumCGIs;
 
 // http:/192.168.2.7///cgi-bin/getLogMeasValues
 
@@ -40,24 +41,6 @@ int todoIndex;
 const static char http_html_hdr[] = "HTTP/1.1 200 OK\nContent-type: text/html\n\n,";
 
 int readDescriptors(char *pBuffer, int count);
-// @formatter:off
-// do not alter
-static const tCGI CGIurls[] = {
-		{ "/cgi-bin/readvar", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) readVarScript },  // !!!!!! index  !!
-		{ "/cgi-bin/writevar", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) readVarScript },  // !!!!!! index  !!
-		{ "/action_page.php", (tCGIHandler_t) readCGIvalues,(CGIresponseFileHandler_t) actionRespScript },
-		{ "/cgi-bin/getLogMeasValues", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getDayLogScript},
-		{ "/cgi-bin/getRTMeasValues", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getRTMeasValuesScript},
-		{ "/cgi-bin/getChargeValues", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getChargeValuesScript},
-		{ "/cgi-bin/getInfoValues", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getInfoValuesScript},
-		{ "/cgi-bin/getCalValues", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getCalValuesScript},
-		{ "/cgi-bin/getSensorName", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getSensorNameScript},
-		{ "/cgi-bin/saveSettings", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) saveSettingsScript},
-		{ "/cgi-bin/cancelSettings", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) cancelSettingsScript},
-		{ "/cgi-bin/getChargeTable", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getChargeTableScript},
-};
-
-#define NUM_CGIurls ( sizeof (CGIurls)/sizeof( tCGI))
 
 
 static const CGIdesc_t CGIdescriptors[] = {
@@ -316,7 +299,7 @@ int readVarScript(char *pBuffer, int count) {
 
 void CGI_init(void) {
 	g_pCGIs = CGIurls; // for file_server to read CGIurls
-	g_iNumCGIs = NUM_CGIurls;
+//	g_iNumCGIs = NUM_CGIurls;
 
 }
 

@@ -312,8 +312,8 @@ void testTask(void *pvParameter) {
 				//		ESP_LOGI(TAG, "%d wait2 %d mA %4.3f V", n + 1, testChannel[n].current, testChannel[n].voltage);
 				if (testChannel[n].current < NOCURRENT) {
 					testChannel[n].setCurrent = testChannel[n].chargeCurrent;
-					testChannel[n].outCharge = 0;
-					testChannel[n].inCharge = 0;
+					testChannel[n].chargedCapacity = 0;
+					testChannel[n].dechargedCapacity = 0;
 					testChannel[n].isTested = true;
 					//	testChannel[n].status = STATUS_TESTED;
 					testChannel[n].status = STATUS_CHARGING; // recharge
@@ -397,6 +397,19 @@ void testTask(void *pvParameter) {
 }
 
 // called from CGI
+
+int getFunctionScript (char *pBuffer, int count) {
+	int len = 0;
+	switch (scriptState) {
+	case 0:
+		scriptState++;
+		len += sprintf(pBuffer + len, "%s", functionText[function]);
+		break;
+	default:
+		break;
+	}
+	return (len);
+}
 
 int getSensorNameScript(char *pBuffer, int count) {
 	int len = 0;

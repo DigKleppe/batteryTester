@@ -91,7 +91,6 @@ typedef struct {
 int getChargeValuesScript(char *pBuffer, int count);
 int getRTMeasValuesScript(char *pBuffer, int count) ;
 int getNewMeasValuesScript(char *pBuffer, int count);
-int getLogScript(char *pBuffer, int count);
 int getInfoValuesScript (char *pBuffer, int count);
 int getCalValuesScript (char *pBuffer, int count);
 int saveSettingsScript (char *pBuffer, int count);
@@ -102,6 +101,7 @@ void parseCGIWriteData(char *buf, int received);
 void setCurrentScript(char *buf, int received);
 void stopCalScript(char *buf, int received);
 int getChargeTableScript(char *pBuffer, int count);
+int getFunctionScript(char *pBuffer, int count);
 
 
 #endif /* MAIN_INCLUDE_MEASURETASK_H_ */

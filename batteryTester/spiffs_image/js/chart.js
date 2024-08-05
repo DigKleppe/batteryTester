@@ -234,7 +234,6 @@ function timer() {
 	var chargeInfoTbl;
 	if (SIMULATE) {
 		simplot();
-
 	}
 	else {
 		if (firstRequest) {

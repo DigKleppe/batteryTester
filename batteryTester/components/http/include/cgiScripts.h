@@ -20,7 +20,7 @@ int freadCGI( char *buffer, int count);
 void CGI_init( void );
 
 extern const tCGI *g_pCGIs;
-extern int g_iNumCGIs;
+//extern int g_iNumCGIs;
 typedef enum { FLT, STR, INT , DESCR , CALVAL} varType_t;
 
 typedef struct {
@@ -33,5 +33,9 @@ typedef struct {
 extern const CGIdesc_t writeVarDescriptors[];
 void parseCGIWriteData(char * buf, int received);
 int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size );
+const char* startCGIscript(int iIndex, char *pcParam);
+const char* readCGIvalues(int iIndex, char *pcParam);
+int readVarScript(char *pBuffer, int count);
+int actionRespScript(char *pBuffer, int count);
 
 #endif /* HTTPD_CGI_H_ */
