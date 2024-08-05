@@ -127,8 +127,10 @@ void testTask(void *pvParameter) {
 
 			case STATUS_NO_BAT:
 				//			ESP_LOGI(TAG, "%d no battery %4.3f V", n + 1, testChannel[n].voltage);
-				if (testChannel[n].voltage < ERRORVOLTAGE)
-					sprintf(LCDline + len, "* Fout * %3.2f V", testChannel[n].voltage);
+				if (testChannel[n].voltage < ERRORVOLTAGE){
+					sprintf(LCDline + len, "* Fout * %3.2f V", testChannel[n].voltage);		testChannel[n].setCurrent = 0;
+					testChannel[n].setCurrent = 0;
+				}
 				else {
 					if (noBat(n))
 						strcpy(LCDline + len, "Geen batterij");
