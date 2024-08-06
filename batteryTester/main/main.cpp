@@ -10,6 +10,8 @@
 #include "freertos/task.h"
 #include "nvs_flash.h"
 
+#include "driver/temperature_sensor.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -19,6 +21,7 @@
 
 void currentRegulatorTask(void *pvParameter);
 esp_err_t init_spiffs(void);
+float temperature;
 
 static const char *TAG = "main";
 bool
@@ -153,6 +156,7 @@ void guiTask(void *pvParameter)
 extern "C" void app_main(void)
 {
 	esp_err_t err;
+	int presc = 0;
 	LCDsemphr = xSemaphoreCreateRecursiveMutex();
 
 	vTaskDelay(100);
@@ -180,9 +184,19 @@ extern "C" void app_main(void)
 
 	wifiConnect();
 
+    temperature_sensor_handle_t temp_sensor = NULL;
+    temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(50, 125);
+    ESP_ERROR_CHECK(temperature_sensor_install(&temp_sensor_config, &temp_sensor));
+
+
 	while (true)
 	{
 		vTaskDelay(10);
 		keysTimerHandler_ms(10);
+		if ( presc == 0 ){
+	        ESP_ERROR_CHECK(temperature_sensor_get_celsius(temp_sensor, &temperature));
+	   //     ESP_LOGI(TAG, "Temperature value %.02f ℃", temperature);
+		}
+
 	}
 }

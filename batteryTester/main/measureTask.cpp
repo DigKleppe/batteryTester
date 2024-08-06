@@ -29,6 +29,8 @@ static const int NOBATDEBOUNCES = 3;
 static const int MEASINTERVAL = 300; // every 60 seconds measure voltage without current
 static const int MEASTIME = 10;
 
+extern float temperature;
+
 Averager avgm1(MEASTIME);
 Averager avgm2(MEASTIME);
 Averager avgm3(MEASTIME);
@@ -497,7 +499,7 @@ int getChargeTableScript(char *pBuffer, int count) {
 	case 0:
 		scriptState++;
 		len += sprintf(pBuffer + len, "%s", "Meting,Positie 1,Positie 2,Positie 3,Positie 4\n");  // horizontal
-		len += sprintf(pBuffer + len, "%s", "Status,Gemeten mAh:,Spanning (V):,Geladen mAh:,Ontladen mAh:\n"); // vertical
+		len += sprintf(pBuffer + len, "%s", "Status,Gemeten mAh:,Spanning (V):,Geladen mAh:,Ontladen mAh:,Temperatuur\n"); // vertical
 		break;
 	default:
 		break;
@@ -515,7 +517,8 @@ int getChargeValuesScript(char *pBuffer, int count) {
 			len += sprintf(pBuffer + len, "%4d,", testChannel[n].measuredCapacity);
 			len += sprintf(pBuffer + len, "%3.3f,", testChannel[n].voltage);
 			len += sprintf(pBuffer + len, "%d,", testChannel[n].chargedCapacity / 3600);
-			len += sprintf(pBuffer + len, "%d\n", testChannel[n].dechargedCapacity / 3600);
+			len += sprintf(pBuffer + len, "%d,", testChannel[n].dechargedCapacity / 3600);
+			len += sprintf(pBuffer + len, "%.02f ℃\n", temperature);
 			//	len += sprintf(pBuffer + len, "%3.3f,", static_cast<float>(tLog[n]->getValue(1)) / 1000.0); //  5 min ago
 			//	len += sprintf(pBuffer + len, "%3.3f\n", static_cast<float>(tLog[n]->getValue(12)) / 1000.0); //  1 hour ago
 		}
