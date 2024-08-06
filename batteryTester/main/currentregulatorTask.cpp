@@ -64,7 +64,7 @@ currentRegulatorTask (void *pvParameter)
   TickType_t xLastWakeTime;
   xLastWakeTime = xTaskGetTickCount ();
   Wire.begin ();
- // Wire.setClock (400000);
+  Wire.setClock (400000);
 
   for (int n = 0; n < NR_CHANNELS; n++)
     {

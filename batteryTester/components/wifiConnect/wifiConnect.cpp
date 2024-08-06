@@ -29,7 +29,7 @@
 void initialiseMdns( char * hostName);
 esp_err_t start_file_server(const char *base_path);
 
-char myIpAddress[20];
+char myIpAddress[16];
 bool DHCPoff;
 bool IP6off;
 bool DNSoff;
@@ -171,8 +171,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 
 	if ( doStop)
 		return;
-
-	
 	
 	if (event_base == WIFI_EVENT) {
 		ESP_LOGI(TAG, "WifiEvent %d" ,(int )event_id);	
