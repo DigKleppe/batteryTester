@@ -171,7 +171,7 @@ extern "C" void app_main(void) {
 
 	temperature_sensor_handle_t temp_sensor = NULL;
 //	temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(50, 125);
-	temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(10, 50);
+	temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(20, 100);
 	ESP_ERROR_CHECK(temperature_sensor_install(&temp_sensor_config, &temp_sensor));
     ESP_ERROR_CHECK(temperature_sensor_enable(temp_sensor));
 
@@ -181,10 +181,11 @@ extern "C" void app_main(void) {
 		if (presc-- == 0) {
 			presc = 100;
 			temperature_sensor_get_celsius(temp_sensor, &temperature);
-			if( tempRangeLow) {
+/*			if( tempRangeLow) {
 				if (temperature > 55){
 					temp_sensor_config.range_max = 125;
 					temp_sensor_config.range_min = 50;
+				    ESP_ERROR_CHECK(temperature_sensor_disable(temp_sensor));
 					temperature_sensor_uninstall(temp_sensor);
 					ESP_ERROR_CHECK(temperature_sensor_install(&temp_sensor_config, &temp_sensor));
 				    ESP_ERROR_CHECK(temperature_sensor_enable(temp_sensor));
@@ -195,12 +196,13 @@ extern "C" void app_main(void) {
 				if (temperature < 50){
 					temp_sensor_config.range_max = 50;
 					temp_sensor_config.range_min = 10;
+				    ESP_ERROR_CHECK(temperature_sensor_disable(temp_sensor));
 					temperature_sensor_uninstall(temp_sensor);
 					ESP_ERROR_CHECK(temperature_sensor_install(&temp_sensor_config, &temp_sensor));
 				    ESP_ERROR_CHECK(temperature_sensor_enable(temp_sensor));
 				    tempRangeLow = true;
 				}
-			}
+			}*/
 			//ESP_LOGI(TAG, "Temperature value %.02f ℃", temperature);
 		}
 		if (!ipShown) {
