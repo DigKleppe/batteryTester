@@ -129,7 +129,7 @@ currentRegulatorTask (void *pvParameter)
                 }
             }
         }
-      xTaskDelayUntil (&xLastWakeTime, 5);
+      xTaskDelayUntil (&xLastWakeTime, 3);
       if (cycles++ > 10) // avererage
         currentRegulatorStarted = true;
     }

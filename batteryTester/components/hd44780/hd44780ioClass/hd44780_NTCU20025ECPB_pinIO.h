@@ -313,26 +313,26 @@ private:
   // 192-255 -100%
 
   int iosetBacklight(uint8_t dimvalue) {
-    if (dimvalue) {
-      // brightness is set by sending a brightness control byte after a function
-      // set Data which follows the FunctionSet command is considered as
-      // brightness data.
-
-      // send a function set,
-      // this is effectively a NOP, since it will set mode to what it already is
-      // Data which follows
-      command(HD44780_FUNCTIONSET | _displayfunction);
-
-      // send the brightness control byte to set brightness level
-      _write(3 - dimvalue / 64);
-
-      display(); // turn display on in case it was off
-
-    } else {
-      noDisplay(); // turn off display for 0% brightness
-    }
-
-    // can't tell if it really worked with pin i/o, so say it always worked.
+//    if (dimvalue) {
+//      // brightness is set by sending a brightness control byte after a function
+//      // set Data which follows the FunctionSet command is considered as
+//      // brightness data.
+//
+//      // send a function set,
+//      // this is effectively a NOP, since it will set mode to what it already is
+//      // Data which follows
+//      command(HD44780_FUNCTIONSET | _displayfunction);
+//
+//      // send the brightness control byte to set brightness level
+//      _write(3 - dimvalue / 64);
+//
+//      display(); // turn display on in case it was off
+//
+//    } else {
+//      noDisplay(); // turn off display for 0% brightness
+//    }
+//
+//    // can't tell if it really worked with pin i/o, so say it always worked.
     return (hd44780::RV_ENOERR); // it never fails
   }
 

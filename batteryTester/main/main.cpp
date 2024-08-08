@@ -57,7 +57,7 @@ void guiTask(void *pvParameter) {
 	uiState_t state = uiStateWAIT;
 	int timer = 0;
 	int selCapIdx = 0;
-	int channelIdx;
+	int channelIdx = 0;
 	int testModeTimer = 0;
 
 	do {

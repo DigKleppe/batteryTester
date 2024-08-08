@@ -95,7 +95,7 @@ void testTask(void *pvParameter) {
 	TickType_t xLastWakeTime;
 	char LCDline[400];
 	int len;
-	bool toggle;
+	bool toggle= false;
 	int displayTimer[NR_CHANNELS];
 	bool displayToggle[NR_CHANNELS];
 	int measTimer[NR_CHANNELS];
@@ -435,7 +435,7 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		for (int n = 0; n < NR_CHANNELS; n++) {
 			sprintf(str, "%d", n + 1);
 			len += sprintf(pBuffer + len, "%s spanning,%3.3f, -, -\n", str, testChannel[n].voltage); // no gain and offset needed for voltage
-			len += sprintf(pBuffer + len, "%s stroom ,%3.2f,%3.2f,%3.2f\n", str, testChannel[n].current - userSettings.currentOffset[n], userSettings.currentOffset[n],
+			len += sprintf(pBuffer + len, "%s stroom ,%3.2f,%3.2f,%3.4f\n", str, testChannel[n].current - userSettings.currentOffset[n], userSettings.currentOffset[n],
 					userSettings.currentGain[n]);
 		}
 		break;

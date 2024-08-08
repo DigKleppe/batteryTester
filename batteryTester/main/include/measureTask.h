@@ -70,10 +70,10 @@ typedef struct {
 #define NOBATVOLTAGEDECHARGING 0.2
 #define ERRORVOLTAGE 0.6
 #define NOCURRENT 2       // mA
-#define CHARGEDDROP 0.008 // V full charged
+#define CHARGEDDROP 0.008 // V full charged  not used
 #define MAXCHARGETIME	6 // hours charging at 0.2C
 
-#define MAXCURRENT		800 // mA
+#define MAXCURRENT		700 // mA
 
 extern testChannel_t testChannel[NR_CHANNELS];
 extern bool setupNeeded;
