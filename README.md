@@ -16,7 +16,7 @@ The LCD has a hd44780 driver. It is a 5V type, but the logic levels of the ESP a
 End-of-charging detection: In some literature you can find that a small voltage dip (10-15mV) is present when the battery is nearly full.
 To measure this small dip the voltage is measured currentless. Else the not-so very stable contact-resistance causes too high deviations. 
 It turns out that on most battries the dip is not present. The only way to properly charge is to first decharge the cell,and then charge timed.
-16 hours at 0.1C is mostly used. I choosed to make this 7 hours at 0.2C. Also decharging is done at 0.2C.
+16 hours at 0.1C is mostly used. I choosed to make this 6 hours at 0.2C. Also decharging is done at 0.2C.
 
 Manual:
 Insert a battery. Choose with the key the nearest capacity. At first the cell is decharged ("O" on the lcd) ,then charged ("L") and again decarged.
